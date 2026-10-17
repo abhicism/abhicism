@@ -2197,6 +2197,7 @@
         let mouseTarget = { x: 0, y: 0 };
         let mouseSmooth = { x: 0, y: 0 };
         let ragPulseStrength = 0;
+        let polyFollowTarget = null, cursorRayVec = null;
 
         function initThreeOverlay() {
             const container = document.getElementById("webgl-overlay");
@@ -2296,6 +2297,10 @@
             shoulderParticles = new THREE.Points(spGeo, spMat);
             scene.add(shoulderParticles);
 
+            // 4. Cursor-Follow Setup for the Holographic Wireframe Ball (polyGroup)
+            polyFollowTarget = new THREE.Vector3(-2.3, 3.1, 0.5);
+            cursorRayVec = new THREE.Vector3();
+
             window.addEventListener("resize", onWindowResize);
             window.addEventListener("mousemove", onMouseMove);
             window.addEventListener("touchmove", onTouchMove, { passive: true });
@@ -2355,11 +2360,25 @@
             }
             posAttr.needsUpdate = true;
 
-            // 3. Rotate Floating 3D Polyhedron
-            if (polyGroup) {
+            // 3. Rotate Floating 3D Wireframe Ball so it Follows the Mouse Cursor
+            if (polyGroup && polyFollowTarget) {
+                // Project the smoothed cursor onto the ball's depth plane in front of the camera
+                cursorRayVec.set(mouseSmooth.x, mouseSmooth.y, 0.5).unproject(camera);
+                const dir = cursorRayVec.sub(camera.position).normalize();
+                const dist = (0.5 - camera.position.z) / dir.z;
+                if (dist > 0) {
+                    polyFollowTarget.copy(camera.position).addScaledVector(dir, dist);
+                    polyFollowTarget.y += Math.sin(elapsed * 1.2) * 0.16;
+                }
+
+                // Ease toward the cursor so it trails slightly behind the mouse
+                polyGroup.position.lerp(polyFollowTarget, 0.06);
                 polyGroup.rotation.x = elapsed * 0.25 + mouseSmooth.y * 0.3;
                 polyGroup.rotation.y = elapsed * 0.38 + mouseSmooth.x * 0.3;
-                polyGroup.position.y = 3.1 + Math.sin(elapsed * 1.2) * 0.14;
+
+                // Breathing pulse + extra swell on RAG / bento / node interactions
+                const ballPulse = 1 + Math.sin(elapsed * 2.6) * 0.045 + ragPulseStrength * 0.5;
+                polyGroup.scale.setScalar(ballPulse);
             }
 
             // 4. Float Holographic Shoulder Particles
