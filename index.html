@@ -56,7 +56,7 @@
             min-height: 100vh;
         }
 
-        /* 1. Full-Viewport 3D Motion Portrait Background Layer */
+        /* 1. Full-Viewport 3D Portrait Background Layer */
         #photo-3d-viewport {
             position: fixed;
             inset: 0;
@@ -284,7 +284,7 @@
 <body class="selection:bg-cyan-400 selection:text-slate-950">
 
     <!-- ===================================================================
-         LAYER 1: FULL-VIEWPORT 3D MOTION PORTRAIT BACKGROUND
+         LAYER 1: FULL-VIEWPORT 3D PORTRAIT BACKGROUND
          Uses uploaded portrait 652631895_2107286223403367_7068580594276608999_n_2.jpg
          =================================================================== -->
     <div id="photo-3d-viewport" aria-hidden="true">
@@ -372,7 +372,7 @@
                     <div class="hud-panel px-3 py-1.5 rounded-lg flex items-center gap-2 text-xs font-mono">
                         <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
                         <span class="text-cyan-300 font-semibold">ABHISHEK MOHANTY</span>
-                        <span class="text-slate-400 hidden sm:inline">| 3D MOTION PORTRAIT HUD</span>
+                        <span class="text-slate-400 hidden sm:inline"></span>
                     </div>
 
                     <!-- Photo Brightness / Dimmer Control -->
@@ -392,11 +392,6 @@
                     </div>
 
                     <!-- Upload / Swap Custom Portrait Photo -->
-                    <label class="hud-panel px-2.5 py-1.5 rounded-lg text-[11px] font-mono text-cyan-300 hover:bg-cyan-500/20 cursor-pointer transition flex items-center gap-1.5">
-                        <i class="fa-solid fa-camera-rotate"></i>
-                        <span>Swap Photo</span>
-                        <input type="file" accept="image/*" class="hidden" onchange="handleCustomPortraitUpload(event)" />
-                    </label>
                 </div>
 
                 <!-- Top-Right Olive Green Portfolio Badge + Threads Profile Link -->
@@ -594,7 +589,15 @@
 
                         <!-- Bottom Status Footer -->
                         <div class="px-3.5 py-1.5 bg-slate-950 border-t border-slate-800/90 flex items-center justify-between text-[10px] font-mono text-slate-400">
-                            <span id="threads-last-synced">Auto-polling @abhicism (Photos/Videos/Carousels)</span>
+                            <div class="flex items-center gap-2">
+                        <span id="threads-last-synced">Auto-polling @abhicism (Photos/Videos/Carousels)</span>
+                        <span id="threads-sync-state" class="hidden items-center gap-1 px-1.5 py-0.2 rounded text-[9px] font-mono bg-slate-800/80 border border-slate-700 text-slate-400">
+                            <span class="w-1 h-1 rounded-full bg-cyan-400"></span>
+                            <span id="threads-sync-state-text">IDLE</span>
+                        </span>
+                        <span id="threads-sync-source" class="hidden px-1.5 py-0.2 rounded text-[9px] font-mono bg-slate-800/80 border border-slate-700 text-slate-400" title="Last sync source">SRC:--</span>
+                        <span id="threads-count" class="hidden px-1.5 py-0.2 rounded text-[9px] font-mono bg-slate-800/80 border border-slate-700 text-slate-400">0</span>
+                    </div>
                             <div class="flex items-center gap-3">
                                 <button onclick="openThreadsModal()" class="text-[#c5e1a5] hover:underline flex items-center gap-1">
                                     <i class="fa-solid fa-Expand"></i>
@@ -884,6 +887,8 @@
                         <i class="fa-regular fa-copy text-emerald-400"></i>
                         <span id="copy-url-status">Copy Portfolio URL</span>
                     </button>
+                    <span>&bull;</span>
+                    <span class="text-slate-500">&copy; <span class="text-slate-400">Abhishek Mohanty</span> (@abhicism)</span>
                 </div>
             </footer>
 
@@ -1109,7 +1114,7 @@
     </div>
 
     <!-- ===================================================================
-         SCRIPTS: 3D MOTION PORTRAIT, THREE.JS WAVE, & THREADS PHOTO/VIDEO ENGINE
+         SCRIPTS: 3D PORTRAIT, THREE.JS WAVE, & THREADS PHOTO/VIDEO ENGINE
          =================================================================== -->
     <script>
         const PORTFOLIO_URL = "https://webpage-two-lake.vercel.app/";
@@ -1123,6 +1128,14 @@
         let activeCarouselIndices = {}; // { postId: slideIndex }
         let lightboxState = { post: null, slideIndex: 0 };
         let syntheticRagVideoUrl = null;
+
+        // Real-time Threads sync state
+        let threadsSyncTimer = null;
+        let lastSyncTime = 0;
+        let lastSyncSource = null; // 'graph' | 'rss' | 'fallback' | null
+        let lastSyncError = null;
+        let isThreadsSyncing = false;
+        let nextSyncAt = 0;
 
         /********************************************************************
          * 1. GENERATE HIGH-TECH RICH MEDIA ASSETS (60FPS CANVAS VIDEO + DIAGRAMS)
