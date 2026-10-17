@@ -1,0 +1,2532 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Abhishek Mohanty | Full-Stack & RAG Systems Engineer</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Orbitron, Rajdhani, Inter, JetBrains Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Orbitron:wght@500;600;700;800;900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Three.js r128 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- Official Meta Threads Embed Script -->
+    <script async src="https://www.threads.com/embed.js"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        display: ['Orbitron', 'Rajdhani', 'sans-serif'],
+                        hud: ['Rajdhani', 'Inter', 'sans-serif'],
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        oliveBase: '#556B2F',
+                        oliveDark: '#35441b',
+                        oliveLight: '#9ccc65',
+                        cyberCyan: '#22d3ee',
+                        cyberBlue: '#38bdf8',
+                        hudBg: 'rgba(8, 15, 28, 0.72)'
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #040914;
+            color: #e2e8f0;
+            overflow-x: hidden;
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+        }
+
+        /* 1. Full-Viewport 3D Motion Portrait Background Layer */
+        #photo-3d-viewport {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            perspective: 1200px;
+            overflow: hidden;
+            background: radial-gradient(circle at 60% 35%, #0c1f38 0%, #040914 80%);
+        }
+
+        #photo-3d-layer {
+            position: absolute;
+            inset: -4%;
+            width: 108%;
+            height: 108%;
+            transform-style: preserve-3d;
+            transition: transform 0.12s cubic-bezier(0.16, 1, 0.3, 1);
+            will-change: transform;
+        }
+
+        #bg-portrait-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: 56% 18%;
+            filter: contrast(1.08) saturate(1.06) brightness(0.88);
+            user-select: none;
+            -webkit-user-drag: none;
+        }
+
+        #bg-fallback-canvas {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: none;
+        }
+
+        /* Cinematic Vignette & Color Grade Overlays */
+        #photo-vignette {
+            position: fixed;
+            inset: 0;
+            z-index: 1;
+            pointer-events: none;
+            background:
+                linear-gradient(90deg, rgba(4, 9, 20, 0.88) 0%, rgba(4, 9, 20, 0.45) 36%, rgba(4, 9, 20, 0.14) 58%, rgba(4, 9, 20, 0.78) 100%),
+                linear-gradient(180deg, rgba(4, 9, 20, 0.55) 0%, rgba(4, 9, 20, 0.08) 38%, rgba(4, 9, 20, 0.28) 72%, rgba(4, 9, 20, 0.92) 100%),
+                radial-gradient(circle at 58% 28%, rgba(34, 211, 238, 0.14) 0%, transparent 52%);
+            transition: opacity 0.25s ease;
+        }
+
+        /* Scanline Subtle Texture */
+        .cyber-scanlines {
+            position: fixed;
+            inset: 0;
+            z-index: 2;
+            pointer-events: none;
+            background: repeating-linear-gradient(
+                to bottom,
+                transparent 0px,
+                transparent 3px,
+                rgba(34, 211, 238, 0.018) 4px
+            );
+        }
+
+        /* 2. Three.js Transparent Holographic Particle & Wireframe Overlay */
+        #webgl-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 3;
+            pointer-events: none;
+        }
+
+        /* 3. Interactive HUD Command Center Layer */
+        #hud-shell {
+            position: relative;
+            z-index: 10;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .side-nav-dock {
+            transform: translateX(calc(-100% + 12px));
+            transition: transform 0.25s ease;
+            will-change: transform;
+        }
+
+        .side-nav-dock:focus-within,
+        .side-nav-dock.is-open {
+            transform: translateX(0);
+        }
+
+        @media (hover: hover) {
+            .side-nav-dock:hover {
+                transform: translateX(0);
+            }
+        }
+
+        .side-nav-toggle {
+            position: absolute;
+            top: 50%;
+            right: -12px;
+            transform: translateY(-50%);
+        }
+
+        /* Olive Green HUD Panels & Docks (Remembering user's Olive Green preference) */
+        .olive-dock {
+            background: linear-gradient(180deg, rgba(85, 107, 47, 0.84) 0%, rgba(45, 58, 24, 0.90) 100%);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            border: 1px solid rgba(156, 204, 101, 0.42);
+            box-shadow: 0 10px 32px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+        }
+
+        .olive-header-strip {
+            background: linear-gradient(90deg, rgba(85, 107, 47, 0.92) 0%, rgba(56, 72, 30, 0.85) 100%);
+            border-bottom: 1px solid rgba(156, 204, 101, 0.4);
+        }
+
+        /* Glassmorphic HUD Cards */
+        .hud-panel {
+            background: rgba(8, 16, 30, 0.68);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            border: 1px solid rgba(56, 189, 248, 0.28);
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.55), inset 0 0 22px rgba(34, 211, 238, 0.05);
+        }
+
+        .hud-panel:hover {
+            border-color: rgba(34, 211, 238, 0.5);
+        }
+
+        /* Chamfered Sci-Fi Portal CTA Button */
+        .portal-frame {
+            position: relative;
+            background: linear-gradient(180deg, rgba(10, 25, 47, 0.88) 0%, rgba(6, 15, 30, 0.95) 100%);
+            border: 1.5px solid rgba(34, 211, 238, 0.75);
+            box-shadow:
+                0 0 35px rgba(34, 211, 238, 0.35),
+                0 0 70px rgba(16, 185, 129, 0.18),
+                inset 0 0 28px rgba(34, 211, 238, 0.22);
+            clip-path: polygon(
+                18px 0%, calc(100% - 18px) 0%,
+                100% 18px, 100% calc(100% - 18px),
+                calc(100% - 18px) 100%, 18px 100%,
+                0% calc(100% - 18px), 0% 18px
+            );
+            transition: all 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .portal-frame:hover {
+            transform: translateY(-3px) scale(1.02);
+            border-color: #67e8f9;
+            box-shadow:
+                0 0 50px rgba(34, 211, 238, 0.6),
+                0 0 90px rgba(16, 185, 129, 0.3),
+                inset 0 0 36px rgba(34, 211, 238, 0.35);
+        }
+
+        /* Animated Glowing Headline */
+        .hero-title-glow {
+            text-shadow: 0 0 24px rgba(34, 211, 238, 0.38), 0 4px 16px rgba(0, 0, 0, 0.85);
+        }
+
+        /* Bento Cards */
+        .bento-tile {
+            transition: all 0.25s ease;
+        }
+        .bento-tile:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 24px rgba(34, 211, 238, 0.22);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 5px;
+            height: 5px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(6, 11, 22, 0.6);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(85, 107, 47, 0.85);
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(34, 211, 238, 0.85);
+        }
+
+        @keyframes floatCursor {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(-5px, -5px) scale(1.08); }
+        }
+        .animate-cursor-float {
+            animation: floatCursor 2.4s ease-in-out infinite;
+        }
+
+        @keyframes ragFlowDash {
+            to { stroke-dashoffset: -24; }
+        }
+        .rag-flow-line {
+            stroke-dasharray: 4 4;
+            animation: ragFlowDash 1.2s linear infinite;
+        }
+
+        /* Media Container Hover Zoom */
+        .thread-media-wrap {
+            position: relative;
+            overflow: hidden;
+            border-radius: 0.65rem;
+            border: 1px solid rgba(56, 189, 248, 0.28);
+            background: rgba(3, 8, 18, 0.9);
+        }
+        .thread-media-wrap img {
+            transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .thread-media-wrap:hover img {
+            transform: scale(1.03);
+        }
+    </style>
+</head>
+
+<body class="selection:bg-cyan-400 selection:text-slate-950">
+
+    <!-- ===================================================================
+         LAYER 1: FULL-VIEWPORT 3D MOTION PORTRAIT BACKGROUND
+         Uses uploaded portrait 652631895_2107286223403367_7068580594276608999_n_2.jpg
+         =================================================================== -->
+    <div id="photo-3d-viewport" aria-hidden="true">
+        <div id="photo-3d-layer">
+            <img
+                id="bg-portrait-img"
+                src="652631895_2107286223403367_7068580594276608999_n_2.jpg"
+                alt="Abhishek Mohanty - Full-Stack & RAG Systems Engineer"
+                onerror="handlePortraitFallback(this)"
+            />
+            <!-- High-Detail Procedural Cybernetic Portrait Canvas Fallback -->
+            <canvas id="bg-fallback-canvas" width="1920" height="1080"></canvas>
+        </div>
+    </div>
+
+    <!-- Cinematic Vignette & Scanlines -->
+    <div id="photo-vignette"></div>
+    <div class="cyber-scanlines"></div>
+
+    <!-- ===================================================================
+         LAYER 2: THREE.JS HOLOGRAPHIC 3D PARTICLE WAVE & WIREFRAME POLYHEDRON
+         =================================================================== -->
+    <div id="webgl-overlay"></div>
+
+    <!-- ===================================================================
+         LAYER 3: HOLOGRAPHIC COMMAND-CENTER HUD LAYOUT
+         =================================================================== -->
+    <div id="hud-shell" class="flex min-h-screen">
+
+        <!-- LEFT OLIVE-GREEN VERTICAL SIDEBAR DOCK -->
+        <aside id="side-nav-dock" class="side-nav-dock fixed left-0 top-0 bottom-0 w-12 sm:w-14 olive-dock z-30 flex flex-col items-center justify-between py-4">
+            <button
+                id="side-nav-toggle"
+                type="button"
+                onclick="toggleSideNav()"
+                aria-label="Toggle side navigation"
+                aria-expanded="false"
+                title="Open side navigation"
+                class="side-nav-toggle w-6 h-12 rounded-r-lg bg-[#35441b] border border-l-0 border-[#9ccc65]/60 text-[#dcedc8] hover:text-cyan-300 flex items-center justify-center shadow-lg"
+            >
+                <i id="side-nav-toggle-icon" class="fa-solid fa-chevron-right text-[10px]"></i>
+            </button>
+
+            <!-- Top Lambda / 'A' Emblem -->
+            <a href="https://webpage-two-lake.vercel.app/" target="_blank" rel="noopener noreferrer" title="Jump to Main Portfolio" class="w-9 h-9 rounded-lg bg-slate-950/60 border border-cyan-400/50 flex items-center justify-center text-cyan-300 font-display font-bold text-lg shadow-lg shadow-cyan-500/20 hover:scale-110 transition">
+                &Lambda;
+            </a>
+
+            <!-- Middle Navigation Icons -->
+            <nav class="flex flex-col items-center gap-4 text-slate-200/80">
+                <button onclick="pulseRagFlow()" title="Overview & 3D HUD" class="w-9 h-9 rounded-lg bg-[#6b8e23]/60 border border-[#9ccc65]/60 text-white flex items-center justify-center hover:text-cyan-300 transition">
+                    <i class="fa-solid fa-table-cells-large text-sm"></i>
+                </button>
+                <button onclick="openThreadsModal()" title="Threads Live Media Showcase (@abhicism)" class="w-9 h-9 rounded-lg hover:bg-slate-900/50 flex items-center justify-center hover:text-cyan-300 transition relative">
+                    <i class="fa-brands fa-threads text-base text-[#c5e1a5]"></i>
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 absolute top-1.5 right-1.5 animate-ping"></span>
+                </button>
+                <button onclick="runTerminalCmd('rag')" title="Simulate Hybrid RAG Pipeline" class="w-9 h-9 rounded-lg hover:bg-slate-900/50 flex items-center justify-center hover:text-cyan-300 transition">
+                    <i class="fa-solid fa-diagram-project text-sm"></i>
+                </button>
+                <button onclick="runTerminalCmd('stack')" title="Full-Stack Architecture" class="w-9 h-9 rounded-lg hover:bg-slate-900/50 flex items-center justify-center hover:text-cyan-300 transition">
+                    <i class="fa-solid fa-gears text-sm"></i>
+                </button>
+                <button onclick="openPortalPreviewModal()" title="Preview Main Portfolio Inside HUD" class="w-9 h-9 rounded-lg hover:bg-slate-900/50 flex items-center justify-center hover:text-cyan-300 transition">
+                    <i class="fa-solid fa-window-maximize text-sm"></i>
+                </button>
+                <button onclick="focusTerminalInput()" title="Focus Live Terminal" class="w-9 h-9 rounded-lg hover:bg-slate-900/50 flex items-center justify-center hover:text-cyan-300 transition">
+                    <i class="fa-solid fa-code text-sm"></i>
+                </button>
+            </nav>
+
+            <!-- Bottom Direct Portal Exit Icon -->
+            <a href="https://webpage-two-lake.vercel.app/" target="_blank" rel="noopener noreferrer" title="Launch https://webpage-two-lake.vercel.app/" class="w-9 h-9 rounded-lg bg-slate-950/60 border border-[#9ccc65]/40 text-[#c5e1a5] hover:text-cyan-300 hover:border-cyan-400 flex items-center justify-center transition">
+                <i class="fa-solid fa-arrow-right-from-bracket text-sm"></i>
+            </a>
+        </aside>
+
+        <!-- MAIN WORKSPACE CONTAINER (Padded past left sidebar) -->
+        <div class="pl-12 sm:pl-14 w-full min-h-screen flex flex-col justify-between p-3 sm:p-5 lg:p-6">
+
+            <!-- TOP BAR: STATUS TELEMETRY, PHOTO CONTROLS & TOP-RIGHT BADGE -->
+            <header class="flex flex-wrap items-center justify-between gap-3 z-20">
+                <!-- Left Status Pill + 3D Photo Controls -->
+                <div class="flex flex-wrap items-center gap-2">
+                    <div class="hud-panel px-3 py-1.5 rounded-lg flex items-center gap-2 text-xs font-mono">
+                        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                        <span class="text-cyan-300 font-semibold">ABHISHEK MOHANTY</span>
+                        <span class="text-slate-400 hidden sm:inline">| 3D MOTION PORTRAIT HUD</span>
+                    </div>
+
+                    <!-- Photo Brightness / Dimmer Control -->
+                    <div class="hud-panel px-3 py-1.5 rounded-lg hidden md:flex items-center gap-2 text-[11px] font-mono text-slate-300">
+                        <i class="fa-solid fa-sun text-cyan-400"></i>
+                        <span>Photo Exposure:</span>
+                        <input
+                            id="photo-exposure-slider"
+                            type="range"
+                            min="55"
+                            max="125"
+                            value="92"
+                            oninput="adjustPhotoExposure(this.value)"
+                            class="w-20 accent-cyan-400 cursor-pointer"
+                            title="Adjust Background Portrait Brightness"
+                        />
+                    </div>
+
+                    <!-- Upload / Swap Custom Portrait Photo -->
+                    <label class="hud-panel px-2.5 py-1.5 rounded-lg text-[11px] font-mono text-cyan-300 hover:bg-cyan-500/20 cursor-pointer transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-camera-rotate"></i>
+                        <span>Swap Photo</span>
+                        <input type="file" accept="image/*" class="hidden" onchange="handleCustomPortraitUpload(event)" />
+                    </label>
+                </div>
+
+                <!-- Top-Right Olive Green Portfolio Badge + Threads Profile Link -->
+                <div class="flex items-center gap-2">
+                    <a
+                        href="https://www.threads.com/@abhicism"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="hud-panel px-3.5 py-1.5 rounded-lg text-xs font-mono text-cyan-300 hover:text-white flex items-center gap-2 transition border border-cyan-400/40"
+                        title="Follow @abhicism on Threads"
+                    >
+                        <i class="fa-brands fa-threads text-sm text-[#c5e1a5]"></i>
+                        <span>@abhicism</span>
+                        <span class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 text-[9px] border border-emerald-500/30">MEDIA READY</span>
+                    </a>
+
+                    <a
+                        href="https://webpage-two-lake.vercel.app/"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="olive-dock px-4 py-1.5 rounded-lg text-xs font-mono text-[#e6ee9c] hover:text-white flex items-center gap-2 transition group"
+                    >
+                        <span class="w-2 h-2 rounded-full bg-[#c5e1a5] group-hover:scale-125 transition"></span>
+                        <span class="tracking-wider font-semibold">Abhishek Mohanty Portfolio</span>
+                        <i class="fa-solid fa-arrow-up-right-from-square text-[10px] text-cyan-300"></i>
+                    </a>
+                </div>
+            </header>
+
+            <!-- MIDDLE GRID: LEFT STACK (HEADLINE + HIGHLIGHTS + THREADS MEDIA BOX + TERMINAL) | CENTER PORTRAIT VIEW | RIGHT STACK (RAG GRAPH + DOCK + BENTO) -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-5 my-auto py-3 items-start">
+
+                <!-- ================= LEFT COLUMN (5 Cols on Desktop) ================= -->
+                <div class="lg:col-span-5 flex flex-col gap-3.5 z-20">
+
+                    <!-- Main Title Block -->
+                    <div class="space-y-1">
+                        <div class="inline-flex items-center gap-2 px-2.5 py-0.5 rounded bg-[#556B2F]/60 border border-[#9ccc65]/50 text-[#dcedc8] text-[10px] font-mono tracking-widest uppercase">
+                            <span>SYSTEMS ARCHITECTURE &bull; VECTOR AI &bull; WEBGL</span>
+                        </div>
+                        <h1 class="font-display font-extrabold text-2xl sm:text-4xl xl:text-[40px] leading-[1.08] tracking-wide text-cyan-300 hero-title-glow uppercase">
+                            FULL-STACK &amp; RAG<br/>
+                            <span class="text-white">SYSTEMS ENGINEER</span>
+                        </h1>
+                    </div>
+
+                    <!-- TECHNICAL HIGHLIGHTS PANEL -->
+                    <section class="hud-panel rounded-xl p-3.5 max-w-xl space-y-2 border-l-4 border-l-cyan-400">
+                        <div class="flex items-center justify-between border-b border-cyan-500/25 pb-1.5">
+                            <h2 class="font-hud font-bold tracking-wider text-xs sm:text-sm text-cyan-300 uppercase flex items-center gap-2">
+                                <i class="fa-solid fa-microchip text-xs"></i>
+                                <span>TECHNICAL HIGHLIGHTS</span>
+                            </h2>
+                            <span class="text-[10px] font-mono text-emerald-400">p95 &lt; 45ms</span>
+                        </div>
+                        <ul class="space-y-1 text-xs text-slate-200 font-sans leading-snug">
+                            <li class="flex items-start gap-2">
+                                <span class="text-cyan-400 font-bold">&bull;</span>
+                                <span>Full-stack and RAG systems software engineer (<strong class="text-cyan-300 font-mono">Python, C++, TypeScript, React, FastAPI</strong>)</span>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <span class="text-cyan-400 font-bold">&bull;</span>
+                                <span>Retrieval-Augmented Generation pipelines (<strong class="text-emerald-300 font-mono">Qdrant, pgvector, Hybrid BM25 + RRF</strong>)</span>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <span class="text-cyan-400 font-bold">&bull;</span>
+                                <span>Distributed software architecture (<strong class="text-amber-300 font-mono">PostgreSQL, MySQL, Redis Streams, Docker</strong>)</span>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <span class="text-cyan-400 font-bold">&bull;</span>
+                                <span>Multi-agent orchestration &amp; citation-grounded synthesis (<strong class="text-cyan-300 font-mono">96.4% RAGAS Faithfulness</strong>)</span>
+                            </li>
+                        </ul>
+                    </section>
+
+                    <!-- =================================================================
+                         THREADS RICH MEDIA SHOWCASE BOX (PHOTOS, CAROUSELS & VIDEOS)
+                         Profile URL: https://www.threads.com/@abhicism
+                         ================================================================= -->
+                    <section id="threads-showcase-box" class="hud-panel rounded-xl overflow-hidden max-w-xl border border-cyan-500/40 shadow-2xl">
+                        <!-- Olive-Green + Cyan Threads Header Bar -->
+                        <div class="olive-header-strip px-3.5 py-2 flex items-center justify-between gap-2">
+                            <div class="flex items-center gap-2">
+                                <a
+                                    href="https://www.threads.com/@abhicism"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    class="w-6 h-6 rounded-md bg-slate-950/80 border border-cyan-400/50 flex items-center justify-center text-white hover:text-cyan-300 transition"
+                                    title="Open https://www.threads.com/@abhicism"
+                                >
+                                    <i class="fa-brands fa-threads text-xs"></i>
+                                </a>
+                                <div>
+                                    <div class="flex items-center gap-1.5">
+                                        <span class="font-hud font-bold tracking-wider text-xs text-white uppercase">THREADS LIVE</span>
+                                        <a href="https://www.threads.com/@abhicism" target="_blank" rel="noopener noreferrer" class="text-[11px] font-mono text-cyan-300 hover:underline font-semibold">@abhicism</a>
+                                        <span id="threads-sync-badge" class="inline-flex items-center gap-1 px-1.5 py-0.2 rounded text-[9px] font-mono bg-emerald-500/20 text-emerald-300 border border-emerald-400/40">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>PHOTO+VIDEO
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Action Controls: Filter Pills + Sync Now + Add Media + Expand -->
+                            <div class="flex items-center gap-1">
+                                <!-- Media Filter Tabs (ALL / PHOTOS / VIDEOS) -->
+                                <div class="flex items-center bg-slate-950/75 p-0.5 rounded-md border border-slate-700/80 mr-1">
+                                    <button onclick="setThreadsMediaFilter('all')" id="tfilter-all" class="px-1.5 py-0.5 rounded text-[9px] font-mono font-semibold bg-cyan-500/25 text-cyan-300 transition">
+                                        ALL
+                                    </button>
+                                    <button onclick="setThreadsMediaFilter('photo')" id="tfilter-photo" class="px-1.5 py-0.5 rounded text-[9px] font-mono text-slate-300 hover:text-white transition" title="Show Photo & Carousel Posts">
+                                        <i class="fa-regular fa-image mr-0.5"></i>IMG
+                                    </button>
+                                    <button onclick="setThreadsMediaFilter('video')" id="tfilter-video" class="px-1.5 py-0.5 rounded text-[9px] font-mono text-slate-300 hover:text-white transition" title="Show Video Posts">
+                                        <i class="fa-solid fa-film mr-0.5"></i>VID
+                                    </button>
+                                </div>
+
+                                <button
+                                    onclick="syncThreadsFeed(true)"
+                                    class="px-2 py-1 rounded bg-slate-950/70 hover:bg-slate-900 text-[10px] font-mono text-cyan-300 border border-cyan-500/30 flex items-center gap-1 transition"
+                                    title="Poll https://www.threads.com/@abhicism for new photo/video posts now"
+                                >
+                                    <i id="threads-sync-icon" class="fa-solid fa-arrows-rotate text-[10px]"></i>
+                                    <span class="hidden sm:inline">Sync</span>
+                                </button>
+                                <button
+                                    onclick="toggleQuickThreadComposer()"
+                                    class="px-2 py-1 rounded bg-cyan-500/20 hover:bg-cyan-500/30 text-[10px] font-mono text-cyan-200 border border-cyan-400/40 transition"
+                                    title="Upload / Attach Photo, Video, or Threads Post URL"
+                                >
+                                    <i class="fa-solid fa-photo-film mr-0.5"></i>+Media
+                                </button>
+                                <button
+                                    onclick="openThreadsModal()"
+                                    class="px-2 py-1 rounded bg-slate-950/70 hover:bg-slate-900 text-slate-300 hover:text-white text-[10px] border border-slate-700 transition"
+                                    title="Expand Full Threads Media Gallery & API Config"
+                                >
+                                    <i class="fa-solid fa-expand"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Collapsible Quick Media / Post / Embed Mirror Drawer -->
+                        <div id="quick-thread-composer" class="hidden bg-slate-950/95 px-3.5 py-3 border-b border-slate-800 space-y-2.5">
+                            <div class="flex items-center justify-between text-[10px] font-mono text-cyan-300">
+                                <span><i class="fa-solid fa-cloud-arrow-up mr-1"></i>PUBLISH / MIRROR THREAD WITH PHOTO OR VIDEO (@abhicism)</span>
+                                <button onclick="toggleQuickThreadComposer()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+                            </div>
+
+                            <!-- Caption Input -->
+                            <input
+                                id="quick-thread-text"
+                                type="text"
+                                placeholder="Post caption or paste https://www.threads.com/@abhicism/post/... link"
+                                class="w-full px-2.5 py-1.5 rounded bg-slate-900 border border-slate-700 text-xs font-mono text-white focus:border-cyan-400 focus:outline-none"
+                            />
+
+                            <!-- Media URL or Local Photo/Video File Upload Row -->
+                            <div class="grid grid-cols-1 sm:grid-cols-12 gap-1.5">
+                                <input
+                                    id="quick-thread-media-url"
+                                    type="text"
+                                    placeholder="Direct Photo (.jpg/.png/.webp) or Video (.mp4/.webm) URL (optional)"
+                                    class="sm:col-span-6 px-2.5 py-1.5 rounded bg-slate-900 border border-slate-700 text-[11px] font-mono text-cyan-200 focus:border-cyan-400 focus:outline-none"
+                                />
+                                <label class="sm:col-span-3 px-2.5 py-1.5 rounded bg-slate-900 hover:bg-slate-800 border border-cyan-500/40 text-[10px] font-mono text-cyan-300 cursor-pointer flex items-center justify-center gap-1 transition truncate">
+                                    <i class="fa-solid fa-upload"></i>
+                                    <span id="quick-upload-label">Upload File(s)</span>
+                                    <input
+                                        id="quick-thread-file-input"
+                                        type="file"
+                                        accept="image/*,video/*"
+                                        multiple
+                                        class="hidden"
+                                        onchange="handleQuickMediaFileSelect(event)"
+                                    />
+                                </label>
+                                <button
+                                    onclick="publishQuickThread()"
+                                    class="sm:col-span-3 px-3 py-1.5 rounded bg-gradient-to-r from-cyan-400 to-emerald-400 text-slate-950 font-mono font-bold text-[11px] hover:brightness-110 transition"
+                                >
+                                    Reflect Now
+                                </button>
+                            </div>
+
+                            <!-- Selected Media Preview Strip -->
+                            <div id="quick-media-preview-strip" class="hidden flex items-center gap-2 pt-1 overflow-x-auto"></div>
+                        </div>
+
+                        <!-- Scrollable Threads Rich Media Feed Container -->
+                        <div id="threads-feed-list" class="p-3 bg-slate-950/90 max-h-64 sm:max-h-72 overflow-y-auto space-y-3">
+                            <!-- Dynamically populated by JavaScript with Video, Carousel & Photo Threads -->
+                        </div>
+
+                        <!-- Bottom Status Footer -->
+                        <div class="px-3.5 py-1.5 bg-slate-950 border-t border-slate-800/90 flex items-center justify-between text-[10px] font-mono text-slate-400">
+                            <span id="threads-last-synced">Auto-polling @abhicism (Photos/Videos/Carousels)</span>
+                            <div class="flex items-center gap-3">
+                                <button onclick="openThreadsModal()" class="text-[#c5e1a5] hover:underline flex items-center gap-1">
+                                    <i class="fa-solid fa-Expand"></i>
+                                    <span>Theater View</span>
+                                </button>
+                                <a
+                                    href="https://www.threads.com/@abhicism"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    class="text-cyan-300 hover:text-cyan-200 flex items-center gap-1"
+                                >
+                                    <span>threads.com/@abhicism</span>
+                                    <i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- LIVE INTERACTIVE TERMINAL WINDOW -->
+                    <section class="hud-panel rounded-xl overflow-hidden max-w-xl border border-[#8FBC8F]/35 shadow-2xl">
+                        <!-- Olive-Green Terminal Titlebar -->
+                        <div class="olive-header-strip px-3.5 py-1.5 flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <span class="font-hud font-bold tracking-wider text-xs text-white uppercase">LIVE TERMINAL</span>
+                                <span class="text-[10px] font-mono text-[#dcedc8] hidden sm:inline">// abhishek@rag-node</span>
+                            </div>
+                            <div class="flex items-center gap-2 text-slate-300 text-xs">
+                                <button onclick="runTerminalCmd('threads')" title="List Threads Media Feed in CLI" class="hover:text-white text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-900/50">threads</button>
+                                <button onclick="runTerminalCmd('clear')" title="Clear Terminal" class="hover:text-white text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-900/50">clear</button>
+                            </div>
+                        </div>
+
+                        <!-- Terminal Output Stream -->
+                        <div id="terminal-body" class="p-3 bg-slate-950/90 font-mono text-[11px] leading-relaxed h-28 sm:h-32 overflow-y-auto space-y-1 text-slate-300" onclick="focusTerminalInput()">
+                            <div><span class="text-emerald-400">$</span> <span class="text-amber-300">node -v &amp;&amp; rag-engine --status</span></div>
+                            <div class="text-slate-400">&gt; Target Portal: <a href="https://webpage-two-lake.vercel.app/" target="_blank" class="text-cyan-300 underline hover:text-cyan-200">https://webpage-two-lake.vercel.app/</a></div>
+                            <div class="text-slate-400">&gt; Threads Rich Media Sync: <a href="https://www.threads.com/@abhicism" target="_blank" class="text-emerald-300 underline hover:text-emerald-200">https://www.threads.com/@abhicism</a> [VIDEO + CAROUSEL + IMG]</div>
+                            <div class="text-slate-400">&gt; Try <span class="text-emerald-300">open</span>, <span class="text-emerald-300">threads</span>, <span class="text-emerald-300">rag</span>, <span class="text-emerald-300">stack</span>, or <span class="text-emerald-300">help</span></div>
+                        </div>
+
+                        <!-- Interactive Command Input Line -->
+                        <form onsubmit="handleTerminalSubmit(event)" class="bg-slate-950 px-3 py-1.5 border-t border-slate-800/90 flex items-center gap-2 font-mono text-xs">
+                            <span class="text-emerald-400 font-bold">abhishek@hud:~$</span>
+                            <input
+                                id="terminal-cmd-input"
+                                type="text"
+                                placeholder="Type 'threads', 'open', 'rag', 'stack', 'help'..."
+                                autocomplete="off"
+                                class="w-full bg-transparent text-cyan-200 focus:outline-none text-xs"
+                            />
+                        </form>
+                    </section>
+                </div>
+
+                <!-- ================= CENTER COLUMN (2 Cols on Desktop - Keeps Portrait Clear) ================= -->
+                <div class="hidden lg:flex lg:col-span-2 flex-col items-center justify-center pointer-events-none select-none min-h-[340px]">
+                    <!-- Intentionally open so the 3D animated portrait of Abhishek Mohanty remains unobstructed -->
+                </div>
+
+                <!-- ================= RIGHT COLUMN (5 Cols on Desktop) ================= -->
+                <div class="lg:col-span-5 flex flex-col items-end justify-between gap-4 z-20">
+
+                    <!-- TOP-RIGHT: INTERACTIVE HOLOGRAPHIC RAG SYSTEM ARCHITECTURE GRAPH -->
+                    <div class="hud-panel rounded-xl p-3.5 w-full max-w-lg border border-cyan-500/30">
+                        <div class="flex items-center justify-between mb-1.5">
+                            <div class="flex items-center gap-2">
+                                <span class="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
+                                <span class="font-hud font-bold text-xs tracking-wider text-cyan-300 uppercase">RAG PIPELINE TOPOLOGY (INTERACTIVE)</span>
+                            </div>
+                            <button onclick="pulseRagFlow()" class="px-2 py-0.5 rounded bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 border border-cyan-400/40 text-[10px] font-mono transition">
+                                <i class="fa-solid fa-bolt mr-1"></i>Simulate Query
+                            </button>
+                        </div>
+
+                        <!-- SVG Holographic Flowchart -->
+                        <div class="relative w-full overflow-x-auto">
+                            <svg viewBox="0 0 460 155" class="w-full h-auto select-none">
+                                <defs>
+                                    <linearGradient id="cyanGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                                        <stop offset="0%" stop-color="#22d3ee" stop-opacity="0.9"/>
+                                        <stop offset="100%" stop-color="#9ccc65" stop-opacity="0.9"/>
+                                    </linearGradient>
+                                </defs>
+
+                                <!-- Connecting Animated Edges -->
+                                <path d="M 220 34 L 85 68" stroke="url(#cyanGrad)" stroke-width="1.5" fill="none" class="rag-flow-line"/>
+                                <path d="M 220 34 L 175 68" stroke="url(#cyanGrad)" stroke-width="1.5" fill="none" class="rag-flow-line"/>
+                                <path d="M 220 34 L 265 68" stroke="url(#cyanGrad)" stroke-width="1.5" fill="none" class="rag-flow-line"/>
+                                <path d="M 220 34 L 355 68" stroke="url(#cyanGrad)" stroke-width="1.5" fill="none" class="rag-flow-line"/>
+                                <path d="M 175 96 L 220 124" stroke="#22d3ee" stroke-width="1.5" fill="none" class="rag-flow-line"/>
+                                <path d="M 265 96 L 220 124" stroke="#22d3ee" stroke-width="1.5" fill="none" class="rag-flow-line"/>
+                                <path d="M 355 82 L 405 42" stroke="#9ccc65" stroke-width="1.4" fill="none" class="rag-flow-line"/>
+                                <path d="M 355 82 L 405 115" stroke="#9ccc65" stroke-width="1.4" fill="none" class="rag-flow-line"/>
+
+                                <!-- Top Root Node: RAG Orchestrator -->
+                                <g class="cursor-pointer" onclick="inspectRagNode('RAG Orchestrator: Coordinates query decomposition, HyDE expansion, and parallel dense + lexical retrieval.')">
+                                    <rect x="180" y="6" width="80" height="28" rx="6" fill="rgba(12, 32, 54, 0.9)" stroke="#22d3ee" stroke-width="1.5"/>
+                                    <text x="220" y="24" text-anchor="middle" fill="#e2e8f0" font-family="JetBrains Mono" font-size="10" font-weight="bold">RAG CORE</text>
+                                </g>
+
+                                <!-- Stage Nodes Row -->
+                                <g class="cursor-pointer" onclick="inspectRagNode('Semantic Chunker: AST & layout-aware document chunking with sliding window overlap.')">
+                                    <rect x="45" y="68" width="76" height="28" rx="5" fill="rgba(15, 23, 42, 0.9)" stroke="#38bdf8" stroke-width="1.2"/>
+                                    <text x="83" y="85" text-anchor="middle" fill="#bae6fd" font-family="JetBrains Mono" font-size="8.5">Chunking</text>
+                                </g>
+
+                                <g class="cursor-pointer" onclick="inspectRagNode('Hybrid Retriever: Dense 1536d embeddings + BM25 sparse vectors fused via Reciprocal Rank Fusion (RRF).')">
+                                    <rect x="136" y="68" width="78" height="28" rx="5" fill="rgba(15, 23, 42, 0.9)" stroke="#22d3ee" stroke-width="1.2"/>
+                                    <text x="175" y="85" text-anchor="middle" fill="#67e8f9" font-family="JetBrains Mono" font-size="8.5">Embeddings</text>
+                                </g>
+
+                                <g class="cursor-pointer" onclick="inspectRagNode('Vector DB (Qdrant / pgvector): HNSW index with int8 Scalar Quantization for sub-45ms ANN search.')">
+                                    <rect x="226" y="68" width="78" height="28" rx="5" fill="rgba(85, 107, 47, 0.45)" stroke="#9ccc65" stroke-width="1.2"/>
+                                    <text x="265" y="85" text-anchor="middle" fill="#dcedc8" font-family="JetBrains Mono" font-size="8.5">Vector DB</text>
+                                </g>
+
+                                <g class="cursor-pointer" onclick="inspectRagNode('Cross-Encoder Reranker + Citation Lock: Prunes low-relevance context and verifies grounded LLM output.')">
+                                    <rect x="316" y="68" width="78" height="28" rx="5" fill="rgba(15, 23, 42, 0.9)" stroke="#38bdf8" stroke-width="1.2"/>
+                                    <text x="355" y="85" text-anchor="middle" fill="#bae6fd" font-family="JetBrains Mono" font-size="8.5">Rerank LLM</text>
+                                </g>
+
+                                <!-- Bottom Node: Grounded Synthesis -->
+                                <g class="cursor-pointer" onclick="inspectRagNode('SSE Streaming Synthesis: Token-by-token response generation with inline source citations.')">
+                                    <rect x="168" y="122" width="104" height="25" rx="5" fill="rgba(16, 185, 129, 0.2)" stroke="#34d399" stroke-width="1.2"/>
+                                    <text x="220" y="138" text-anchor="middle" fill="#a7f3d0" font-family="JetBrains Mono" font-size="8.5">Grounded Output</text>
+                                </g>
+
+                                <!-- Far Right Output Nodes -->
+                                <rect x="405" y="26" width="48" height="26" rx="4" fill="rgba(15, 23, 42, 0.9)" stroke="#9ccc65" stroke-width="1"/>
+                                <text x="429" y="42" text-anchor="middle" fill="#dcedc8" font-family="JetBrains Mono" font-size="7.5"> Docs</text>
+
+                                <rect x="405" y="102" width="48" height="26" rx="4" fill="rgba(15, 23, 42, 0.9)" stroke="#22d3ee" stroke-width="1"/>
+                                <text x="429" y="118" text-anchor="middle" fill="#67e8f9" font-family="JetBrains Mono" font-size="7.5">API SSE</text>
+                            </svg>
+                        </div>
+
+                        <div id="rag-node-readout" class="text-[11px] font-mono text-slate-300 bg-slate-950/80 px-2.5 py-1.5 rounded border border-slate-800 truncate">
+                            <span class="text-cyan-400">STATUS:</span> Click any node above to inspect RAG telemetry.
+                        </div>
+                    </div>
+
+                    <!-- MIDDLE-RIGHT: OLIVE-GREEN VERTICAL TECH STACK DOCK -->
+                    <div class="olive-dock rounded-xl p-2.5 w-48 space-y-1.5 text-xs font-mono">
+                        <div class="text-[10px] text-[#dcedc8] uppercase tracking-wider font-semibold border-b border-[#9ccc65]/30 pb-1 flex items-center justify-between">
+                            <span>SYS MODULES</span>
+                            <i class="fa-solid fa-server text-[10px]"></i>
+                        </div>
+                        <button onclick="inspectStackModule('DATABASE: PostgreSQL 16 + MySQL + pgvector HNSW clusters')" class="w-full px-2.5 py-1 rounded hover:bg-slate-950/40 flex items-center gap-2.5 text-[#f1f8e9] transition text-left">
+                            <i class="fa-solid fa-database text-[#c5e1a5] w-4"></i>
+                            <span>PG / VECTOR</span>
+                        </button>
+                        <button onclick="inspectStackModule('STREAMING: Redis Streams + FastAPI Server-Sent Events (SSE)')" class="w-full px-2.5 py-1 rounded hover:bg-slate-950/40 flex items-center gap-2.5 text-[#f1f8e9] transition text-left">
+                            <i class="fa-solid fa-layer-group text-cyan-300 w-4"></i>
+                            <span>SSE / REDIS</span>
+                        </button>
+                        <button onclick="inspectStackModule('VECTOR ENGINE: Qdrant & Milvus Hybrid Dense + Sparse RRF')" class="w-full px-2.5 py-1 rounded hover:bg-slate-950/40 flex items-center gap-2.5 text-[#f1f8e9] transition text-left">
+                            <i class="fa-solid fa-vector-square text-amber-300 w-4"></i>
+                            <span>VDR / QDRANT</span>
+                        </button>
+                        <button onclick="inspectStackModule('BACKEND CORE: Python, C++, TypeScript, FastAPI, REST & gRPC')" class="w-full px-2.5 py-1 rounded hover:bg-slate-950/40 flex items-center gap-2.5 text-[#f1f8e9] transition text-left">
+                            <i class="fa-solid fa-code text-emerald-300 w-4"></i>
+                            <span>FASTAPI / C++</span>
+                        </button>
+                        <button onclick="openThreadsModal()" class="w-full px-2.5 py-1 rounded hover:bg-slate-950/40 flex items-center gap-2.5 text-[#f1f8e9] transition text-left">
+                            <i class="fa-brands fa-threads text-cyan-300 w-4"></i>
+                            <span>@ABHICISM</span>
+                        </button>
+                    </div>
+
+                    <!-- BOTTOM-RIGHT: 6-CARD ENGINEERING BENTO GRIDS -->
+                    <section class="hud-panel rounded-xl p-4 w-full max-w-lg space-y-3 border border-cyan-500/35">
+                        <div class="flex items-center justify-between border-b border-slate-800 pb-1.5">
+                            <h2 class="font-hud font-bold tracking-wider text-xs sm:text-sm text-cyan-300 uppercase">
+                                ENGINEERING BENTO GRIDS
+                            </h2>
+                            <span class="text-[10px] font-mono text-slate-400">Click card to inspect</span>
+                        </div>
+
+                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                            <!-- Card 1: Blue/Cyan -->
+                            <button onclick="inspectBentoCard(0)" class="bento-tile p-3 rounded-xl bg-gradient-to-br from-sky-900/65 to-slate-900/90 border border-cyan-400/40 text-left flex flex-col items-center text-center gap-1.5">
+                                <div class="w-8 h-8 rounded-lg bg-cyan-500/20 flex items-center justify-center text-cyan-300 text-base">
+                                    <i class="fa-brands fa-python"></i>
+                                </div>
+                                <div class="text-[11px] font-semibold text-white leading-tight">Full-Stack<br/>Center</div>
+                            </button>
+
+                            <!-- Card 2: Olive Green -->
+                            <button onclick="inspectBentoCard(1)" class="bento-tile p-3 rounded-xl bg-gradient-to-br from-[#556B2F]/70 to-slate-900/90 border border-[#9ccc65]/45 text-left flex flex-col items-center text-center gap-1.5">
+                                <div class="w-8 h-8 rounded-lg bg-[#9ccc65]/20 flex items-center justify-center text-[#dcedc8] text-base">
+                                    <i class="fa-solid fa-bolt-lightning"></i>
+                                </div>
+                                <div class="text-[11px] font-semibold text-white leading-tight">FastAPI &amp;<br/>React UI</div>
+                            </button>
+
+                            <!-- Card 3: Olive Green -->
+                            <button onclick="inspectBentoCard(2)" class="bento-tile p-3 rounded-xl bg-gradient-to-br from-[#556B2F]/70 to-slate-900/90 border border-[#9ccc65]/45 text-left flex flex-col items-center text-center gap-1.5">
+                                <div class="w-8 h-8 rounded-lg bg-[#9ccc65]/20 flex items-center justify-center text-[#dcedc8] text-base">
+                                    <i class="fa-solid fa-screwdriver-wrench"></i>
+                                </div>
+                                <div class="text-[11px] font-semibold text-white leading-tight">Hybrid RAG<br/>Pipelines</div>
+                            </button>
+
+                            <!-- Card 4: Olive Green -->
+                            <button onclick="inspectBentoCard(3)" class="bento-tile p-3 rounded-xl bg-gradient-to-br from-[#4A5D23]/75 to-slate-900/90 border border-[#9ccc65]/45 text-left flex flex-col items-center text-center gap-1.5">
+                                <div class="w-8 h-8 rounded-lg bg-[#9ccc65]/20 flex items-center justify-center text-[#dcedc8] text-base">
+                                    <i class="fa-solid fa-sitemap"></i>
+                                </div>
+                                <div class="text-[11px] font-semibold text-white leading-tight">Scalable<br/>Architecture</div>
+                            </button>
+
+                            <!-- Card 5: Olive Green -->
+                            <button onclick="inspectBentoCard(4)" class="bento-tile p-3 rounded-xl bg-gradient-to-br from-[#4A5D23]/75 to-slate-900/90 border border-[#9ccc65]/45 text-left flex flex-col items-center text-center gap-1.5">
+                                <div class="w-8 h-8 rounded-lg bg-[#9ccc65]/20 flex items-center justify-center text-[#dcedc8] text-base">
+                                    <i class="fa-solid fa-circle-nodes"></i>
+                                </div>
+                                <div class="text-[11px] font-semibold text-white leading-tight">Vector HNSW<br/>Indexing</div>
+                            </button>
+
+                            <!-- Card 6: Blue/Cyan -->
+                            <button onclick="inspectBentoCard(5)" class="bento-tile p-3 rounded-xl bg-gradient-to-br from-sky-900/65 to-slate-900/90 border border-cyan-400/40 text-left flex flex-col items-center text-center gap-1.5">
+                                <div class="w-8 h-8 rounded-lg bg-cyan-500/20 flex items-center justify-center text-cyan-300 text-base">
+                                    <i class="fa-solid fa-cubes"></i>
+                                </div>
+                                <div class="text-[11px] font-semibold text-white leading-tight">Engineering<br/>Bento</div>
+                            </button>
+                        </div>
+                    </section>
+                </div>
+
+            </div>
+
+            <!-- ===================================================================
+                 BOTTOM-CENTER PROMINENT PORTAL CTA TO MAIN PORTFOLIO WEBSITE
+                 https://webpage-two-lake.vercel.app/
+                 =================================================================== -->
+            <footer class="w-full flex flex-col items-center justify-center pt-1 pb-2 z-30">
+                <div class="relative group">
+                    <!-- Outer Ambient Cyan/Emerald Halo -->
+                    <div class="absolute -inset-2 rounded-2xl bg-gradient-to-r from-cyan-500/40 via-emerald-400/40 to-cyan-500/40 blur-xl opacity-75 group-hover:opacity-100 transition duration-500"></div>
+
+                    <!-- Clickable Chamfered Portal Box -->
+                    <a
+                        id="main-portfolio-portal"
+                        href="https://webpage-two-lake.vercel.app/"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="portal-frame block px-7 sm:px-12 py-3.5 sm:py-4 text-center cursor-pointer select-none"
+                    >
+                        <!-- Decorative Corner Tick Marks -->
+                        <div class="flex items-center justify-center gap-2 text-[10px] font-mono text-emerald-300 tracking-widest uppercase mb-0.5">
+                            <span class="w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span>
+                            <span>DIRECT HYPERLINK PORTAL // CLICK TO JUMP</span>
+                        </div>
+
+                        <div class="font-display font-extrabold text-lg sm:text-2xl md:text-3xl tracking-wider text-white group-hover:text-cyan-200 transition">
+                            ENTER MAIN PORTFOLIO
+                        </div>
+
+                        <div class="font-mono text-xs sm:text-sm md:text-base text-cyan-300 group-hover:text-emerald-300 transition mt-0.5 flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-link text-xs"></i>
+                            <span class="underline decoration-cyan-400/60 underline-offset-4">https://webpage-two-lake.vercel.app/</span>
+                        </div>
+
+                        <!-- Animated Glowing Pointer Cursor Icon (Bottom Right of Portal) -->
+                        <div class="absolute right-3 bottom-1.5 text-cyan-300 animate-cursor-float pointer-events-none">
+                            <svg width="26" height="26" viewBox="0 0 24 24" fill="rgba(34,211,238,0.25)" stroke="#22d3ee" stroke-width="1.8">
+                                <path d="M4 4l7.07 17 2.51-7.39L21 11.07z"/>
+                            </svg>
+                        </div>
+                    </a>
+                </div>
+
+                <!-- Secondary Quick-Action Bar under Portal -->
+                <div class="flex flex-wrap items-center justify-center gap-4 mt-2 text-[11px] font-mono text-slate-400">
+                    <button onclick="openPortalPreviewModal()" class="hover:text-cyan-300 transition flex items-center gap-1">
+                        <i class="fa-solid fa-eye text-cyan-400"></i>
+                        <span>Preview Portfolio in HUD Modal</span>
+                    </button>
+                    <span>&bull;</span>
+                    <button onclick="openThreadsModal()" class="hover:text-emerald-300 transition flex items-center gap-1">
+                        <i class="fa-brands fa-threads text-[#c5e1a5]"></i>
+                        <span>Threads Media Hub (@abhicism)</span>
+                    </button>
+                    <span>&bull;</span>
+                    <button onclick="copyPortfolioUrl()" class="hover:text-cyan-300 transition flex items-center gap-1">
+                        <i class="fa-regular fa-copy text-emerald-400"></i>
+                        <span id="copy-url-status">Copy Portfolio URL</span>
+                    </button>
+                </div>
+            </footer>
+
+        </div>
+    </div>
+
+    <!-- ===================================================================
+         MODAL 1: HOLOGRAPHIC PHOTO / VIDEO / CAROUSEL LIGHTBOX & THEATER
+         =================================================================== -->
+    <div id="media-lightbox-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-3 sm:p-6 bg-slate-950/90 backdrop-blur-xl">
+        <div class="hud-panel rounded-2xl w-full max-w-4xl overflow-hidden border border-cyan-400/60 shadow-2xl flex flex-col max-h-[92vh]">
+            <!-- Top Bar -->
+            <div class="olive-header-strip px-4 py-2.5 flex items-center justify-between">
+                <div class="flex items-center gap-2.5">
+                    <i class="fa-brands fa-threads text-cyan-300 text-base"></i>
+                    <span id="lightbox-title" class="font-mono text-xs sm:text-sm text-white font-semibold">@abhicism // Media Inspection Theater</span>
+                    <span id="lightbox-badge" class="px-2 py-0.5 rounded text-[10px] font-mono bg-cyan-500/20 text-cyan-300 border border-cyan-400/40">MEDIA</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <a
+                        id="lightbox-permalink"
+                        href="https://www.threads.com/@abhicism"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="px-3 py-1 rounded-lg bg-cyan-400 text-slate-950 font-mono font-bold text-xs hover:brightness-110 transition flex items-center gap-1.5"
+                    >
+                        <span>Open on Threads</span>
+                        <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+                    </a>
+                    <button onclick="closeMediaLightbox()" class="w-8 h-8 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white flex items-center justify-center border border-slate-700">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Interactive Stage -->
+            <div id="lightbox-stage" class="relative bg-slate-950 flex-1 flex items-center justify-center min-h-[320px] max-h-[68vh] overflow-hidden p-3">
+                <!-- Populated dynamically with High-Res Image, Carousel, or Video Player -->
+            </div>
+
+            <!-- Caption & Carousel Controls Footer -->
+            <div class="p-4 bg-slate-950/95 border-t border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <p id="lightbox-caption" class="text-xs sm:text-sm text-slate-200 leading-relaxed font-sans"></p>
+                <div id="lightbox-carousel-controls" class="hidden items-center gap-2 shrink-0 font-mono text-xs">
+                    <button onclick="stepLightboxCarousel(-1)" class="px-2.5 py-1 rounded bg-slate-900 hover:bg-slate-800 text-cyan-300 border border-slate-700">
+                        <i class="fa-solid fa-chevron-left"></i> Prev
+                    </button>
+                    <span id="lightbox-slide-counter" class="text-slate-300 px-2">1 / 1</span>
+                    <button onclick="stepLightboxCarousel(1)" class="px-2.5 py-1 rounded bg-slate-900 hover:bg-slate-800 text-cyan-300 border border-slate-700">
+                        Next <i class="fa-solid fa-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================================================================
+         MODAL 2: FULL-SCREEN THREADS COMMAND & AUTO-SYNC HUB (@abhicism)
+         =================================================================== -->
+    <div id="threads-modal" class="fixed inset-0 z-40 hidden items-center justify-center p-3 sm:p-6 bg-slate-950/85 backdrop-blur-md">
+        <div class="hud-panel rounded-2xl w-full max-w-5xl max-h-[90vh] flex flex-col border border-cyan-400/50 overflow-hidden shadow-2xl">
+            <!-- Modal Header -->
+            <div class="olive-header-strip px-4 py-3 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-lg bg-slate-950/80 border border-cyan-400/50 flex items-center justify-center text-cyan-300">
+                        <i class="fa-brands fa-threads text-lg"></i>
+                    </div>
+                    <div>
+                        <div class="font-display font-bold text-sm text-white flex items-center gap-2">
+                            <span>THREADS MEDIA &amp; AUTO-SYNC COMMAND HUB</span>
+                            <span class="px-2 py-0.5 rounded text-[10px] font-mono bg-emerald-500/20 text-emerald-300 border border-emerald-400/40">@abhicism</span>
+                        </div>
+                        <div class="text-[11px] font-mono text-[#dcedc8]">Supports Photos, Multi-Photo Carousels, MP4/WebM Videos &amp; Official Meta Embeds</div>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <a
+                        href="https://www.threads.com/@abhicism"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="px-3 py-1.5 rounded-lg bg-cyan-400 text-slate-950 font-mono font-bold text-xs hover:brightness-110 transition flex items-center gap-1.5"
+                    >
+                        <span>Visit @abhicism on Threads</span>
+                        <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+                    </a>
+                    <button onclick="closeThreadsModal()" class="w-8 h-8 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white flex items-center justify-center border border-slate-700">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="p-4 sm:p-6 overflow-y-auto grid grid-cols-1 lg:grid-cols-12 gap-6 bg-slate-950/90">
+                <!-- Left 7 Cols: Live Feed & Rich Media Cards -->
+                <div class="lg:col-span-7 space-y-4">
+                    <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-2">
+                        <span class="text-xs font-mono text-cyan-300 font-semibold uppercase">
+                            <i class="fa-solid fa-bolt mr-1"></i>Reflected Photo &amp; Video Posts (@abhicism)
+                        </span>
+                        <button onclick="syncThreadsFeed(true)" class="text-xs font-mono text-emerald-300 hover:underline flex items-center gap-1">
+                            <i class="fa-solid fa-rotate"></i>
+                            <span>Poll @abhicism Now</span>
+                        </button>
+                    </div>
+                    <div id="threads-modal-feed-list" class="space-y-3.5 max-h-[56vh] overflow-y-auto pr-1">
+                        <!-- Populated dynamically by JS -->
+                    </div>
+                </div>
+
+                <!-- Right 5 Cols: Auto-Sync Connectors + Rich Media Publisher -->
+                <div class="lg:col-span-5 space-y-4">
+                    <!-- Connector 1: RSS / JSON Bridge URL -->
+                    <div class="p-4 rounded-xl bg-slate-900/90 border border-slate-800 space-y-2.5">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-mono font-bold text-[#c5e1a5]">1. AUTO-SYNC RSS / JSON BRIDGE</span>
+                            <span class="text-[10px] font-mono text-emerald-400">Polls every 60s</span>
+                        </div>
+                        <p class="text-[11px] text-slate-400 leading-relaxed">
+                            Paste any RSS/JSON feed URL for <code class="text-cyan-300">https://www.threads.com/@abhicism</code> (e.g., <code class="text-slate-300">rss.app</code>, <code class="text-slate-300">fetchrss</code>, or <code class="text-slate-300">rsshub.app/threads/abhicism</code>). Photos (`<img>`), enclosures, and `<video>` tags are automatically extracted.
+                        </p>
+                        <input
+                            id="threads-rss-url-input"
+                            type="url"
+                            placeholder="https://rss.app/feeds/... or RSSHub URL"
+                            class="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-xs font-mono text-white focus:border-cyan-400 focus:outline-none"
+                        />
+                        <button onclick="saveThreadsSyncConfig()" class="w-full py-2 rounded-lg olive-dock text-xs font-mono font-semibold text-white hover:brightness-110 transition">
+                            Save &amp; Activate Live Media Bridge
+                        </button>
+                    </div>
+
+                    <!-- Connector 2: Official Meta Threads Graph API Token -->
+                    <div class="p-4 rounded-xl bg-slate-900/90 border border-slate-800 space-y-2.5">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-mono font-bold text-cyan-300">2. META THREADS GRAPH API</span>
+                            <span class="text-[10px] font-mono text-slate-400">IMAGE / VIDEO / CAROUSEL</span>
+                        </div>
+                        <p class="text-[11px] text-slate-400 leading-relaxed">
+                            Queries <code class="text-cyan-300">fields=id,media_type,media_url,thumbnail_url,children{media_type,media_url}</code> so every photo, carousel, and video uploaded on <code class="text-cyan-300">@abhicism</code> renders natively.
+                        </p>
+                        <input
+                            id="threads-api-token-input"
+                            type="password"
+                            placeholder="THQAA... (Meta Threads Graph API Access Token)"
+                            class="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-xs font-mono text-white focus:border-cyan-400 focus:outline-none"
+                        />
+                        <button onclick="saveThreadsSyncConfig()" class="w-full py-2 rounded-lg bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-400/40 text-xs font-mono font-semibold text-cyan-200 transition">
+                            Connect Meta Graph API Token
+                        </button>
+                    </div>
+
+                    <!-- Connector 3: Upload Photo / Video or Official Embed Post -->
+                    <div class="p-4 rounded-xl bg-slate-900/90 border border-slate-800 space-y-2.5">
+                        <div class="text-xs font-mono font-bold text-amber-300">3. UPLOAD PHOTO / VIDEO OR EMBED URL</div>
+                        <input
+                            id="threads-embed-url-input"
+                            type="text"
+                            placeholder="https://www.threads.com/@abhicism/post/..."
+                            class="w-full px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-700 text-xs font-mono text-white focus:border-cyan-400 focus:outline-none"
+                        />
+                        <input
+                            id="threads-modal-media-url"
+                            type="text"
+                            placeholder="Or direct Photo / Video URL (.jpg, .png, .mp4, .webm)"
+                            class="w-full px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-700 text-xs font-mono text-cyan-200 focus:border-cyan-400 focus:outline-none"
+                        />
+                        <textarea
+                            id="threads-embed-text-input"
+                            rows="2"
+                            placeholder="Post caption..."
+                            class="w-full px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-700 text-xs font-mono text-white focus:border-cyan-400 focus:outline-none"
+                        ></textarea>
+                        <div class="flex items-center gap-2">
+                            <label class="flex-1 py-2 px-3 rounded-lg bg-slate-950 hover:bg-slate-800 border border-cyan-500/40 text-xs font-mono text-cyan-300 cursor-pointer text-center transition">
+                                <i class="fa-solid fa-file-video mr-1"></i>Select Photo/Video Files
+                                <input type="file" accept="image/*,video/*" multiple class="hidden" onchange="handleModalMediaUpload(event)" />
+                            </label>
+                            <button onclick="addManualThreadFromModal()" class="flex-1 py-2 rounded-lg bg-gradient-to-r from-cyan-400 to-emerald-400 text-slate-950 font-mono font-bold text-xs hover:brightness-110 transition">
+                                Reflect in HUD
+                            </button>
+                        </div>
+                        <div id="threads-config-status" class="hidden text-[11px] font-mono text-emerald-400 text-center pt-1"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================================================================
+         MODAL 3: IN-HUD LIVE PREVIEW OF https://webpage-two-lake.vercel.app/
+         =================================================================== -->
+    <div id="portal-preview-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-3 sm:p-6 bg-slate-950/85 backdrop-blur-md">
+        <div class="hud-panel rounded-2xl w-full max-w-6xl h-[86vh] flex flex-col border border-cyan-400/50 overflow-hidden shadow-2xl">
+            <div class="olive-header-strip px-4 py-2.5 flex items-center justify-between">
+                <div class="flex items-center gap-2.5">
+                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping"></span>
+                    <span class="font-mono text-xs text-white font-semibold">LIVE PORTAL VIEW // https://webpage-two-lake.vercel.app/</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <a
+                        href="https://webpage-two-lake.vercel.app/"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="px-3 py-1 rounded-lg bg-cyan-400 text-slate-950 font-mono font-bold text-xs hover:brightness-110 transition flex items-center gap-1.5"
+                    >
+                        <span>Open Full Tab</span>
+                        <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+                    </a>
+                    <button onclick="closePortalPreviewModal()" class="w-8 h-8 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white flex items-center justify-center border border-slate-700">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="flex-1 bg-slate-950 relative">
+                <iframe
+                    src="https://webpage-two-lake.vercel.app/"
+                    title="Abhishek Mohanty Main Portfolio"
+                    class="w-full h-full border-0"
+                    loading="lazy"
+                ></iframe>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================================================================
+         SCRIPTS: 3D MOTION PORTRAIT, THREE.JS WAVE, & THREADS PHOTO/VIDEO ENGINE
+         =================================================================== -->
+    <script>
+        const PORTFOLIO_URL = "https://webpage-two-lake.vercel.app/";
+        const THREADS_PROFILE_URL = "https://www.threads.com/@abhicism";
+        const THREADS_STORAGE_KEY = "abhicism_threads_media_v2";
+        const THREADS_CONFIG_KEY = "abhicism_threads_config_v2";
+
+        let currentMediaFilter = 'all'; // 'all' | 'photo' | 'video'
+        let pendingQuickMediaItems = [];
+        let pendingModalMediaItems = [];
+        let activeCarouselIndices = {}; // { postId: slideIndex }
+        let lightboxState = { post: null, slideIndex: 0 };
+        let syntheticRagVideoUrl = null;
+
+        /********************************************************************
+         * 1. GENERATE HIGH-TECH RICH MEDIA ASSETS (60FPS CANVAS VIDEO + DIAGRAMS)
+         * Ensures out-of-the-box playable video and crisp architecture images
+         ********************************************************************/
+        function createArchitectureDiagramDataUri(theme = 'rag') {
+            const c = document.createElement('canvas');
+            c.width = 960;
+            c.height = 540;
+            const ctx = c.getContext('2d');
+
+            if (theme === 'rag') {
+                const g = ctx.createLinearGradient(0, 0, 960, 540);
+                g.addColorStop(0, '#041022');
+                g.addColorStop(0.55, '#09223a');
+                g.addColorStop(1, '#1f2d14');
+                ctx.fillStyle = g;
+                ctx.fillRect(0, 0, 960, 540);
+
+                // Grid
+                ctx.strokeStyle = 'rgba(34, 211, 238, 0.12)';
+                ctx.lineWidth = 1;
+                for (let x = 0; x < 960; x += 40) {
+                    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, 540); ctx.stroke();
+                }
+                for (let y = 0; y < 540; y += 40) {
+                    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(960, y); ctx.stroke();
+                }
+
+                // Header
+                ctx.fillStyle = '#22d3ee';
+                ctx.font = 'bold 24px "JetBrains Mono", monospace';
+                ctx.fillText('HYBRID RAG + RRF TELEMETRY // @abhicism', 42, 52);
+                ctx.fillStyle = '#a3e635';
+                ctx.font = '16px "JetBrains Mono", monospace';
+                ctx.fillText('p95 Latency: 41.8ms  |  RAGAS Faithfulness: 96.4%  |  Qdrant HNSW SQ8', 42, 82);
+
+                // Pipeline Boxes
+                const boxes = [
+                    { x: 50, y: 150, w: 190, h: 110, title: '1. AST CHUNKER', sub: 'Sliding Window + Meta', color: '#38bdf8' },
+                    { x: 290, y: 150, w: 190, h: 110, title: '2. HYBRID EMBED', sub: '1536d Dense + BM25', color: '#22d3ee' },
+                    { x: 530, y: 150, w: 190, h: 110, title: '3. QDRANT RRF', sub: 'int8 Quantized HNSW', color: '#a3e635' },
+                    { x: 755, y: 150, w: 165, h: 110, title: '4. RERANK LLM', sub: 'Citation-Locked SSE', color: '#34d399' }
+                ];
+                boxes.forEach((b, i) => {
+                    ctx.fillStyle = 'rgba(8, 18, 34, 0.88)';
+                    ctx.strokeStyle = b.color;
+                    ctx.lineWidth = 2.5;
+                    ctx.strokeRect(b.x, b.y, b.w, b.h);
+                    ctx.fillRect(b.x, b.y, b.w, b.h);
+                    ctx.fillStyle = b.color;
+                    ctx.font = 'bold 16px "JetBrains Mono", monospace';
+                    ctx.fillText(b.title, b.x + 16, b.y + 46);
+                    ctx.fillStyle = '#cbd5e1';
+                    ctx.font = '13px "Inter", sans-serif';
+                    ctx.fillText(b.sub, b.x + 16, b.y + 76);
+
+                    if (i < boxes.length - 1) {
+                        ctx.strokeStyle = '#22d3ee';
+                        ctx.beginPath();
+                        ctx.moveTo(b.x + b.w, b.y + 55);
+                        ctx.lineTo(boxes[i + 1].x, b.y + 55);
+                        ctx.stroke();
+                    }
+                });
+
+                // Latency Bar Chart
+                ctx.fillStyle = 'rgba(10, 22, 40, 0.85)';
+                ctx.strokeStyle = 'rgba(156, 204, 101, 0.5)';
+                ctx.strokeRect(50, 310, 870, 180);
+                ctx.fillRect(50, 310, 870, 180);
+
+                ctx.fillStyle = '#dcedc8';
+                ctx.font = 'bold 16px "JetBrains Mono", monospace';
+                ctx.fillText('ANN RECALL@10 vs QUANTIZATION BENCHMARK (25M VECTORS)', 75, 345);
+
+                const bars = [
+                    { label: 'FP32 Baseline (118ms, 99.5% Recall)', w: 680, c: '#38bdf8', y: 375 },
+                    { label: 'SQ8 Scalar Quantized (41.8ms, 99.2% Recall) [PROD]', w: 760, c: '#a3e635', y: 415 },
+                    { label: 'Redis Semantic Cache Hit (7.4ms, 100% Exact)', w: 810, c: '#22d3ee', y: 455 }
+                ];
+                bars.forEach(bar => {
+                    ctx.fillStyle = bar.c;
+                    ctx.fillRect(75, bar.y, bar.w, 22);
+                    ctx.fillStyle = '#040914';
+                    ctx.font = 'bold 12px "JetBrains Mono", monospace';
+                    ctx.fillText(bar.label, 85, bar.y + 15);
+                });
+            } else {
+                // Olive Green Workspace & Full-Stack Telemetry Snapshot
+                const g = ctx.createLinearGradient(0, 0, 960, 540);
+                g.addColorStop(0, '#253112');
+                g.addColorStop(0.6, '#131d10');
+                g.addColorStop(1, '#071220');
+                ctx.fillStyle = g;
+                ctx.fillRect(0, 0, 960, 540);
+
+                ctx.fillStyle = '#c5e1a5';
+                ctx.font = 'bold 24px "JetBrains Mono", monospace';
+                ctx.fillText('OLIVE COMMAND RIG & DISTRIBUTED FULL-STACK MESH', 42, 55);
+                ctx.fillStyle = '#22d3ee';
+                ctx.font = '15px "JetBrains Mono", monospace';
+                ctx.fillText('FastAPI + React + PostgreSQL + Three.js 3D Motion HUD // @abhicism', 42, 85);
+
+                // Draw 3D-style Node Mesh
+                for (let i = 0; i < 28; i++) {
+                    const x = 90 + (i * 137) % 780;
+                    const y = 140 + (i * 89) % 340;
+                    ctx.strokeStyle = i % 2 === 0 ? 'rgba(156, 204, 101, 0.35)' : 'rgba(34, 211, 238, 0.35)';
+                    ctx.beginPath();
+                    ctx.moveTo(x, y);
+                    ctx.lineTo(480, 300);
+                    ctx.stroke();
+
+                    ctx.fillStyle = i % 2 === 0 ? '#a3e635' : '#22d3ee';
+                    ctx.beginPath();
+                    ctx.arc(x, y, 6, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+            return c.toDataURL('image/png');
+        }
+
+        const DIAGRAM_RAG_URI = createArchitectureDiagramDataUri('rag');
+        const DIAGRAM_OLIVE_URI = createArchitectureDiagramDataUri('olive');
+
+        /********************************************************************
+         * 2. THREADS LIVE FEED ENGINE (PHOTOS, CAROUSELS, VIDEOS & EMBEDS)
+         ********************************************************************/
+        const DEFAULT_THREADS_POSTS = [
+            {
+                id: "thread_video_rag_01",
+                author: "Abhishek Mohanty",
+                handle: "@abhicism",
+                timestamp: "Pinned Video",
+                media_type: "VIDEO",
+                text: "Live capture of our 3D Vector Embedding & Hybrid RAG telemetry HUD running at 60 FPS. Dense 1,536-d cosine beams + BM25 Reciprocal Rank Fusion hitting 41.8ms p95 latency. Full interactive build on https://webpage-two-lake.vercel.app/",
+                permalink: "https://www.threads.com/@abhicism",
+                likes: 64,
+                replies: 14,
+                media: [
+                    {
+                        type: "VIDEO",
+                        isSyntheticCanvasStream: true,
+                        poster: DIAGRAM_RAG_URI,
+                        caption: "60FPS 3D RAG Vector ANN Search & Particle Wave Stream"
+                    }
+                ]
+            },
+            {
+                id: "thread_carousel_02",
+                author: "Abhishek Mohanty",
+                handle: "@abhicism",
+                timestamp: "5h ago",
+                media_type: "CAROUSEL_ALBUM",
+                text: "Swipe through the 3-layer blueprint: (1) 3D Motion Command Center Portrait, (2) Hybrid RAG + Qdrant SQ8 Latency Benchmarks, and (3) Olive-Green Full-Stack Microservice Mesh.",
+                permalink: "https://www.threads.com/@abhicism",
+                likes: 51,
+                replies: 9,
+                media: [
+                    {
+                        type: "IMAGE",
+                        url: "652631895_2107286223403367_7068580594276608999_n_2.jpg",
+                        fallbackUrl: "652631895_2107286223403367_7068580594276608999_n.jpg",
+                        caption: "Slide 1/3: Abhishek Mohanty — 3D Full-Stack & RAG Systems Command Center"
+                    },
+                    {
+                        type: "IMAGE",
+                        url: DIAGRAM_RAG_URI,
+                        caption: "Slide 2/3: Hybrid BM25 + Dense Vector RRF Pipeline & SQ8 Benchmarks"
+                    },
+                    {
+                        type: "IMAGE",
+                        url: DIAGRAM_OLIVE_URI,
+                        caption: "Slide 3/3: Olive-Green Dev Rig & Distributed FastAPI/PostgreSQL Mesh"
+                    }
+                ]
+            },
+            {
+                id: "thread_photo_03",
+                author: "Abhishek Mohanty",
+                handle: "@abhicism",
+                timestamp: "1d ago",
+                media_type: "IMAGE",
+                text: "Cut vector RAM usage by 75% using int8 Scalar Quantization (SQ8) on 25M+ embeddings while holding 99.2% recall@10. Manual systems engineering > bloated abstractions.",
+                permalink: "https://www.threads.com/@abhicism",
+                likes: 43,
+                replies: 7,
+                media: [
+                    {
+                        type: "IMAGE",
+                        url: DIAGRAM_RAG_URI,
+                        caption: "SQ8 Quantization vs FP32 Recall & Latency Telemetry"
+                    }
+                ]
+            }
+        ];
+
+        function getStoredThreadsPosts() {
+            try {
+                const raw = localStorage.getItem(THREADS_STORAGE_KEY);
+                if (raw) {
+                    const parsed = JSON.parse(raw);
+                    if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+                }
+            } catch (e) {
+                console.warn("Storage read fallback:", e);
+            }
+            return DEFAULT_THREADS_POSTS;
+        }
+
+        function saveThreadsPosts(posts) {
+            try {
+                localStorage.setItem(THREADS_STORAGE_KEY, JSON.stringify(posts.slice(0, 25)));
+            } catch (e) {
+                console.warn("Storage write fallback:", e);
+            }
+        }
+
+        function getThreadsConfig() {
+            try {
+                const raw = localStorage.getItem(THREADS_CONFIG_KEY);
+                if (raw) return JSON.parse(raw);
+            } catch (e) {}
+            return { rssUrl: "", apiToken: "" };
+        }
+
+        function escapeHtml(str) {
+            return String(str || '')
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;");
+        }
+
+        function setThreadsMediaFilter(filter) {
+            currentMediaFilter = filter;
+            ['all', 'photo', 'video'].forEach(f => {
+                const btn = document.getElementById(`tfilter-${f}`);
+                if (!btn) return;
+                if (f === filter) {
+                    btn.className = "px-1.5 py-0.5 rounded text-[9px] font-mono font-semibold bg-cyan-500/25 text-cyan-300 border border-cyan-400/40 transition";
+                } else {
+                    btn.className = "px-1.5 py-0.5 rounded text-[9px] font-mono text-slate-300 hover:text-white transition";
+                }
+            });
+            renderThreadsFeed();
+        }
+
+        function postMatchesFilter(post, filter) {
+            if (filter === 'all') return true;
+            const mediaList = Array.isArray(post.media) ? post.media : [];
+            if (filter === 'video') {
+                return post.media_type === 'VIDEO' || mediaList.some(m => m.type === 'VIDEO');
+            }
+            if (filter === 'photo') {
+                return post.media_type === 'IMAGE' || post.media_type === 'CAROUSEL_ALBUM' || mediaList.some(m => m.type === 'IMAGE');
+            }
+            return true;
+        }
+
+        /* Build Rich Media HTML for a Single Thread Card (Photo, Carousel, or Video) */
+        function renderPostMediaBlock(post, isCompact = true) {
+            const mediaList = Array.isArray(post.media) ? post.media : [];
+            if (mediaList.length === 0) return '';
+
+            const postId = post.id;
+            const currentIdx = activeCarouselIndices[postId] || 0;
+            const safeIdx = Math.max(0, Math.min(currentIdx, mediaList.length - 1));
+            const currentMedia = mediaList[safeIdx];
+            const isCarousel = mediaList.length > 1;
+            const heightClass = isCompact ? 'h-36 sm:h-40' : 'h-56 sm:h-64';
+
+            let innerMediaHtml = '';
+
+            if (currentMedia.type === 'VIDEO') {
+                if (currentMedia.isSyntheticCanvasStream) {
+                    // Live 60FPS interactive canvas-streamed video player
+                    innerMediaHtml = `
+                        <div class="relative w-full ${heightClass} bg-slate-950 flex items-center justify-center">
+                            <canvas data-rag-video-canvas="true" width="640" height="320" class="w-full h-full object-cover"></canvas>
+                            <div class="absolute top-2 left-2 px-2 py-0.5 rounded bg-slate-950/85 border border-cyan-400/50 text-[9px] font-mono text-cyan-300 flex items-center gap-1">
+                                <span class="w-1.5 h-1.5 rounded-full bg-rose-500 animate-ping"></span>
+                                <span>THREADS VIDEO // 60FPS STREAM</span>
+                            </div>
+                            <div class="absolute bottom-2 right-2 flex items-center gap-1.5">
+                                <button onclick="openMediaLightbox('${postId}', ${safeIdx})" class="px-2 py-1 rounded bg-slate-950/85 hover:bg-cyan-500/30 text-cyan-300 border border-cyan-400/40 text-[10px] font-mono transition">
+                                    <i class="fa-solid fa-expand mr-1"></i>Theater
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    // Standard HTML5 Video Player for MP4 / WebM / Meta Threads Video URLs
+                    innerMediaHtml = `
+                        <div class="relative w-full ${heightClass} bg-slate-950 group">
+                            <video
+                                id="vid-${postId}-${safeIdx}"
+                                src="${escapeHtml(currentMedia.url)}"
+                                ${currentMedia.poster ? `poster="${escapeHtml(currentMedia.poster)}"` : ''}
+                                class="w-full h-full object-cover"
+                                loop
+                                muted
+                                playsinline
+                                autoplay
+                            ></video>
+                            <div class="absolute top-2 left-2 px-2 py-0.5 rounded bg-slate-950/85 border border-cyan-400/50 text-[9px] font-mono text-cyan-300 flex items-center gap-1">
+                                <i class="fa-solid fa-film"></i>
+                                <span>VIDEO</span>
+                            </div>
+                            <div class="absolute bottom-2 right-2 flex items-center gap-1.5">
+                                <button onclick="toggleThreadVideoPlay('vid-${postId}-${safeIdx}', this)" class="w-7 h-7 rounded bg-slate-950/85 hover:bg-slate-900 text-cyan-300 border border-slate-700 flex items-center justify-center text-[10px]" title="Play/Pause">
+                                    <i class="fa-solid fa-pause"></i>
+                                </button>
+                                <button onclick="toggleThreadVideoMute('vid-${postId}-${safeIdx}', this)" class="w-7 h-7 rounded bg-slate-950/85 hover:bg-slate-900 text-cyan-300 border border-slate-700 flex items-center justify-center text-[10px]" title="Mute/Unmute">
+                                    <i class="fa-solid fa-volume-xmark"></i>
+                                </button>
+                                <button onclick="openMediaLightbox('${postId}', ${safeIdx})" class="px-2 py-1 rounded bg-slate-950/85 hover:bg-cyan-500/30 text-cyan-300 border border-cyan-400/40 text-[10px] font-mono">
+                                    <i class="fa-solid fa-expand"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }
+            } else {
+                // IMAGE Slide
+                const fallbackAttr = currentMedia.fallbackUrl
+                    ? `onerror="if(this.src!=='${escapeHtml(currentMedia.fallbackUrl)}'){this.src='${escapeHtml(currentMedia.fallbackUrl)}'}else{this.src='${DIAGRAM_RAG_URI}'}"`
+                    : `onerror="this.src='${DIAGRAM_RAG_URI}'"`;
+
+                innerMediaHtml = `
+                    <div class="relative w-full ${heightClass} bg-slate-950 cursor-pointer group" onclick="openMediaLightbox('${postId}', ${safeIdx})">
+                        <img
+                            src="${escapeHtml(currentMedia.url)}"
+                            alt="${escapeHtml(currentMedia.caption || 'Threads Photo @abhicism')}"
+                            ${fallbackAttr}
+                            class="w-full h-full object-cover object-top"
+                            loading="lazy"
+                        />
+                        <div class="absolute top-2 left-2 px-2 py-0.5 rounded bg-slate-950/80 border border-[#9ccc65]/50 text-[9px] font-mono text-[#dcedc8] flex items-center gap-1">
+                            <i class="fa-regular fa-image"></i>
+                            <span>${isCarousel ? `CAROUSEL ${safeIdx + 1}/${mediaList.length}` : 'PHOTO'}</span>
+                        </div>
+                        <div class="absolute inset-0 bg-slate-950/0 group-hover:bg-slate-950/35 transition flex items-center justify-center opacity-0 group-hover:opacity-100">
+                            <span class="px-2.5 py-1 rounded-lg bg-slate-950/90 border border-cyan-400/60 text-cyan-300 text-[10px] font-mono">
+                                <i class="fa-solid fa-magnifying-glass-plus mr-1"></i>Inspect Full Photo
+                            </span>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Carousel Navigation Arrows & Dots if multiple items
+            const carouselControlsHtml = isCarousel ? `
+                <button
+                    onclick="event.stopPropagation(); stepCardCarousel('${postId}', -1)"
+                    class="absolute left-2 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-slate-950/85 hover:bg-cyan-500/30 text-cyan-300 border border-cyan-400/50 flex items-center justify-center text-[10px] z-10"
+                    title="Previous Slide"
+                >
+                    <i class="fa-solid fa-chevron-left"></i>
+                </button>
+                <button
+                    onclick="event.stopPropagation(); stepCardCarousel('${postId}', 1)"
+                    class="absolute right-2 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-slate-950/85 hover:bg-cyan-500/30 text-cyan-300 border border-cyan-400/50 flex items-center justify-center text-[10px] z-10"
+                    title="Next Slide"
+                >
+                    <i class="fa-solid fa-chevron-right"></i>
+                </button>
+                <div class="absolute bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-1 px-2 py-0.5 rounded-full bg-slate-950/80 border border-slate-700 z-10">
+                    ${mediaList.map((_, idx) => `
+                        <span class="w-1.5 h-1.5 rounded-full ${idx === safeIdx ? 'bg-cyan-400' : 'bg-slate-600'}"></span>
+                    `).join('')}
+                </div>
+            ` : '';
+
+            return `
+                <div class="thread-media-wrap mt-2">
+                    ${innerMediaHtml}
+                    ${carouselControlsHtml}
+                </div>
+            `;
+        }
+
+        function stepCardCarousel(postId, delta) {
+            const posts = getStoredThreadsPosts();
+            const post = posts.find(p => p.id === postId);
+            if (!post || !Array.isArray(post.media) || post.media.length === 0) return;
+
+            const current = activeCarouselIndices[postId] || 0;
+            const next = (current + delta + post.media.length) % post.media.length;
+            activeCarouselIndices[postId] = next;
+            renderThreadsFeed();
+        }
+
+        function toggleThreadVideoPlay(videoId, btnEl) {
+            const v = document.getElementById(videoId);
+            if (!v) return;
+            if (v.paused) {
+                v.play();
+                btnEl.innerHTML = '<i class="fa-solid fa-pause"></i>';
+            } else {
+                v.pause();
+                btnEl.innerHTML = '<i class="fa-solid fa-play"></i>';
+            }
+        }
+
+        function toggleThreadVideoMute(videoId, btnEl) {
+            const v = document.getElementById(videoId);
+            if (!v) return;
+            v.muted = !v.muted;
+            btnEl.innerHTML = v.muted
+                ? '<i class="fa-solid fa-volume-xmark"></i>'
+                : '<i class="fa-solid fa-volume-high text-emerald-300"></i>';
+        }
+
+        function renderThreadsFeed() {
+            const allPosts = getStoredThreadsPosts();
+            const posts = allPosts.filter(p => postMatchesFilter(p, currentMediaFilter));
+            const compactList = document.getElementById('threads-feed-list');
+            const modalList = document.getElementById('threads-modal-feed-list');
+
+            const buildCardHtml = (post, isCompact) => {
+                const isSpecificPost = post.permalink && post.permalink.includes('/post/');
+                const mediaHtml = renderPostMediaBlock(post, isCompact);
+
+                // Optional Official Meta Threads Embed Toggle in Full Modal
+                const officialEmbedHtml = (!isCompact && isSpecificPost && post.showOfficialEmbed) ? `
+                    <div class="mt-2 rounded-lg overflow-hidden border border-slate-800 bg-slate-950 p-1">
+                        <blockquote class="threads-post" data-text-post-permalink="${escapeHtml(post.permalink)}" data-text-post-version="0">
+                            <a href="${escapeHtml(post.permalink)}" target="_blank" rel="noopener noreferrer">${escapeHtml(post.permalink)}</a>
+                        </blockquote>
+                    </div>
+                ` : '';
+
+                return `
+                    <article class="p-2.5 rounded-lg bg-slate-900/90 border border-slate-800 hover:border-cyan-500/40 transition space-y-1.5">
+                        <div class="flex items-center justify-between text-[11px]">
+                            <div class="flex items-center gap-2">
+                                <div class="w-5 h-5 rounded-full bg-gradient-to-br from-cyan-400 to-[#556B2F] flex items-center justify-center text-[9px] font-bold text-slate-950">
+                                    AM
+                                </div>
+                                <a href="${escapeHtml(post.permalink || THREADS_PROFILE_URL)}" target="_blank" rel="noopener noreferrer" class="font-mono font-semibold text-white hover:text-cyan-300">
+                                    @abhicism
+                                </a>
+                                <span class="text-[10px] font-mono text-slate-400">&bull; ${escapeHtml(post.timestamp || 'Just now')}</span>
+                            </div>
+                            <a href="${escapeHtml(post.permalink || THREADS_PROFILE_URL)}" target="_blank" rel="noopener noreferrer" class="text-[10px] font-mono text-cyan-400 hover:text-cyan-200 flex items-center gap-1" title="Open on Threads">
+                                <i class="fa-brands fa-threads"></i>
+                                <i class="fa-solid fa-arrow-up-right-from-square text-[8px]"></i>
+                            </a>
+                        </div>
+
+                        <p class="text-xs text-slate-200 leading-snug font-sans">${escapeHtml(post.text)}</p>
+
+                        ${mediaHtml}
+                        ${officialEmbedHtml}
+
+                        <div class="flex items-center justify-between pt-1 text-[10px] font-mono text-slate-400">
+                            <div class="flex items-center gap-3">
+                                <span class="hover:text-rose-400 cursor-pointer"><i class="fa-regular fa-heart mr-1"></i>${post.likes || 19}</span>
+                                <span class="hover:text-cyan-300 cursor-pointer"><i class="fa-regular fa-comment mr-1"></i>${post.replies || 4}</span>
+                                ${Array.isArray(post.media) && post.media.length > 0 ? `
+                                    <button onclick="openMediaLightbox('${post.id}', ${activeCarouselIndices[post.id] || 0})" class="text-cyan-300 hover:underline flex items-center gap-1">
+                                        <i class="fa-solid fa-expand text-[9px]"></i>
+                                        <span>Inspect Media</span>
+                                    </button>
+                                ` : ''}
+                            </div>
+                            <a href="${escapeHtml(post.permalink || THREADS_PROFILE_URL)}" target="_blank" rel="noopener noreferrer" class="text-[#c5e1a5] hover:underline">
+                                View on Threads &rarr;
+                            </a>
+                        </div>
+                    </article>
+                `;
+            };
+
+            if (compactList) {
+                compactList.innerHTML = posts.length
+                    ? posts.map(p => buildCardHtml(p, true)).join('')
+                    : `<div class="text-xs font-mono text-slate-400 p-4 text-center">No @abhicism posts match filter '${currentMediaFilter.toUpperCase()}'.</div>`;
+            }
+            if (modalList) {
+                modalList.innerHTML = allPosts.map(p => buildCardHtml(p, false)).join('');
+                if (window.instgrm && window.instgrm.Embeds) {
+                    try { window.instgrm.Embeds.process(); } catch (e) {}
+                }
+            }
+        }
+
+        /********************************************************************
+         * 3. MEDIA LIGHTBOX & THEATER MODAL
+         ********************************************************************/
+        function openMediaLightbox(postId, slideIdx = 0) {
+            const posts = getStoredThreadsPosts();
+            const post = posts.find(p => p.id === postId);
+            if (!post || !Array.isArray(post.media) || post.media.length === 0) return;
+
+            lightboxState.post = post;
+            lightboxState.slideIndex = Math.max(0, Math.min(slideIdx, post.media.length - 1));
+            renderLightboxSlide();
+
+            const modal = document.getElementById('media-lightbox-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function renderLightboxSlide() {
+            const { post, slideIndex } = lightboxState;
+            if (!post) return;
+            const mediaList = post.media || [];
+            const item = mediaList[slideIndex];
+            if (!item) return;
+
+            const stage = document.getElementById('lightbox-stage');
+            const badge = document.getElementById('lightbox-badge');
+            const caption = document.getElementById('lightbox-caption');
+            const permalink = document.getElementById('lightbox-permalink');
+            const controls = document.getElementById('lightbox-carousel-controls');
+            const counter = document.getElementById('lightbox-slide-counter');
+
+            badge.textContent = item.type === 'VIDEO' ? 'THREADS VIDEO' : (mediaList.length > 1 ? `CAROUSEL ${slideIndex + 1}/${mediaList.length}` : 'THREADS PHOTO');
+            caption.textContent = item.caption || post.text;
+            permalink.href = post.permalink || THREADS_PROFILE_URL;
+
+            if (mediaList.length > 1) {
+                controls.classList.remove('hidden');
+                controls.classList.add('flex');
+                counter.textContent = `${slideIndex + 1} / ${mediaList.length}`;
+            } else {
+                controls.classList.add('hidden');
+                controls.classList.remove('flex');
+            }
+
+            if (item.type === 'VIDEO') {
+                if (item.isSyntheticCanvasStream) {
+                    stage.innerHTML = `
+                        <div class="w-full max-w-3xl aspect-video rounded-xl overflow-hidden border border-cyan-400/50 relative bg-slate-950">
+                            <canvas data-rag-video-canvas="true" width="960" height="540" class="w-full h-full object-cover"></canvas>
+                            <div class="absolute top-3 left-3 px-2.5 py-1 rounded bg-slate-950/85 border border-cyan-400/50 text-xs font-mono text-cyan-300 flex items-center gap-2">
+                                <span class="w-2 h-2 rounded-full bg-rose-500 animate-ping"></span>
+                                <span>LIVE 60FPS WEBGL RAG TELEMETRY STREAM // @abhicism</span>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    stage.innerHTML = `
+                        <video
+                            src="${escapeHtml(item.url)}"
+                            controls
+                            autoplay
+                            loop
+                            playsinline
+                            class="max-h-[62vh] max-w-full rounded-xl border border-cyan-400/40"
+                        ></video>
+                    `;
+                }
+            } else {
+                const fallbackAttr = item.fallbackUrl
+                    ? `onerror="if(this.src!=='${escapeHtml(item.fallbackUrl)}'){this.src='${escapeHtml(item.fallbackUrl)}'}else{this.src='${DIAGRAM_RAG_URI}'}"`
+                    : `onerror="this.src='${DIAGRAM_RAG_URI}'"`;
+
+                stage.innerHTML = `
+                    <img
+                        src="${escapeHtml(item.url)}"
+                        alt="${escapeHtml(item.caption || post.text)}"
+                        ${fallbackAttr}
+                        class="max-h-[62vh] max-w-full object-contain rounded-xl border border-cyan-400/40 shadow-2xl"
+                    />
+                `;
+            }
+        }
+
+        function stepLightboxCarousel(delta) {
+            const { post } = lightboxState;
+            if (!post || !Array.isArray(post.media) || post.media.length <= 1) return;
+            lightboxState.slideIndex = (lightboxState.slideIndex + delta + post.media.length) % post.media.length;
+            renderLightboxSlide();
+        }
+
+        function closeMediaLightbox() {
+            const modal = document.getElementById('media-lightbox-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        /********************************************************************
+         * 4. LIVE THREADS MEDIA SYNC ENGINE (GRAPH API + RSS MEDIA PARSER)
+         ********************************************************************/
+        function extractMediaFromHtml(htmlString, item) {
+            const media = [];
+            const seenUrls = new Set();
+
+            const pushUnique = (type, url, poster) => {
+                if (!url || seenUrls.has(url)) return;
+                seenUrls.add(url);
+                media.push({ type, url, poster: poster || '' });
+            };
+
+            // 1. Check RSS enclosure
+            if (item && item.enclosure && item.enclosure.link) {
+                const encType = (item.enclosure.type || '').toLowerCase();
+                const link = item.enclosure.link;
+                if (encType.includes('video') || /\.(mp4|webm|mov)(\?|$)/i.test(link)) {
+                    pushUnique('VIDEO', link, item.thumbnail || '');
+                } else {
+                    pushUnique('IMAGE', link);
+                }
+            }
+
+            // 2. Check RSS thumbnail
+            if (item && item.thumbnail && !seenUrls.has(item.thumbnail)) {
+                pushUnique('IMAGE', item.thumbnail);
+            }
+
+            // 3. Parse <video>, <source>, and <img> tags inside description/content HTML
+            if (htmlString) {
+                try {
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(htmlString, 'text/html');
+                    doc.querySelectorAll('video, source').forEach(v => {
+                        const src = v.getAttribute('src');
+                        if (src) pushUnique('VIDEO', src, v.getAttribute('poster') || '');
+                    });
+                    doc.querySelectorAll('img').forEach(img => {
+                        const src = img.getAttribute('src');
+                        if (src && !src.includes('1x1') && !src.includes('pixel')) {
+                            pushUnique('IMAGE', src);
+                        }
+                    });
+                } catch (e) {}
+            }
+
+            return media;
+        }
+
+        async function syncThreadsFeed(isManualTrigger = false) {
+            const icon = document.getElementById('threads-sync-icon');
+            const badge = document.getElementById('threads-sync-badge');
+            const statusEl = document.getElementById('threads-last-synced');
+
+            if (icon) icon.classList.add('fa-spin');
+            if (badge) badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping"></span>SYNCING...`;
+
+            const config = getThreadsConfig();
+            let syncedPosts = null;
+
+            try {
+                // TIER 1: Meta Threads Graph API (Fetches IMAGE, VIDEO, and CAROUSEL_ALBUM children)
+                if (config.apiToken && config.apiToken.trim().length > 10) {
+                    const fields = "id,media_type,media_url,thumbnail_url,permalink,text,timestamp,username,children{id,media_type,media_url,thumbnail_url}";
+                    const url = `https://graph.threads.net/v1.0/me/threads?fields=${encodeURIComponent(fields)}&limit=10&access_token=${encodeURIComponent(config.apiToken.trim())}`;
+                    const res = await fetch(url);
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (data && Array.isArray(data.data) && data.data.length > 0) {
+                            syncedPosts = data.data.map(item => {
+                                const mediaItems = [];
+                                if (item.media_type === 'CAROUSEL_ALBUM' && item.children && Array.isArray(item.children.data)) {
+                                    item.children.data.forEach(ch => {
+                                        if (ch.media_url) {
+                                            mediaItems.push({
+                                                type: ch.media_type === 'VIDEO' ? 'VIDEO' : 'IMAGE',
+                                                url: ch.media_url,
+                                                poster: ch.thumbnail_url || ''
+                                            });
+                                        }
+                                    });
+                                } else if (item.media_url) {
+                                    mediaItems.push({
+                                        type: item.media_type === 'VIDEO' ? 'VIDEO' : 'IMAGE',
+                                        url: item.media_url,
+                                        poster: item.thumbnail_url || ''
+                                    });
+                                }
+                                return {
+                                    id: item.id,
+                                    author: "Abhishek Mohanty",
+                                    handle: "@abhicism",
+                                    timestamp: new Date(item.timestamp).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
+                                    media_type: item.media_type || (mediaItems[0]?.type || 'TEXT'),
+                                    text: item.text || "Shared a media update on @abhicism",
+                                    permalink: item.permalink || THREADS_PROFILE_URL,
+                                    likes: 28,
+                                    replies: 5,
+                                    media: mediaItems
+                                };
+                            });
+                        }
+                    }
+                }
+
+                // TIER 2: RSS / JSON Bridge with Photo & Video Enclosure Extraction
+                if (!syncedPosts && config.rssUrl && config.rssUrl.trim().length > 8) {
+                    const rssTarget = config.rssUrl.trim();
+                    const apiUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssTarget)}`;
+                    const res = await fetch(apiUrl);
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (data && Array.isArray(data.items) && data.items.length > 0) {
+                            syncedPosts = data.items.slice(0, 10).map((item, i) => {
+                                const rawHtml = item.content || item.description || '';
+                                const cleanText = rawHtml.replace(/<[^>]*>?/gm, '').trim() || item.title;
+                                const extractedMedia = extractMediaFromHtml(rawHtml, item);
+                                return {
+                                    id: item.guid || `rss_${i}`,
+                                    author: "Abhishek Mohanty",
+                                    handle: "@abhicism",
+                                    timestamp: item.pubDate ? item.pubDate.split(' ')[0] : "Recent",
+                                    media_type: extractedMedia.length > 1 ? 'CAROUSEL_ALBUM' : (extractedMedia[0]?.type || 'TEXT'),
+                                    text: cleanText,
+                                    permalink: item.link || THREADS_PROFILE_URL,
+                                    likes: 24 + i * 3,
+                                    replies: 3 + i,
+                                    media: extractedMedia
+                                };
+                            });
+                        }
+                    }
+                }
+            } catch (err) {
+                console.warn("Threads live sync fallback active:", err);
+            }
+
+            if (syncedPosts && syncedPosts.length > 0) {
+                saveThreadsPosts(syncedPosts);
+            }
+
+            renderThreadsFeed();
+
+            setTimeout(() => {
+                if (icon) icon.classList.remove('fa-spin');
+                if (badge) badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>PHOTO+VIDEO`;
+                const nowStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                if (statusEl) statusEl.textContent = `Synced @abhicism at ${nowStr}`;
+                if (isManualTrigger) {
+                    appendTerminalLine(`<span class="text-emerald-300">&gt; Synced @abhicism rich media feed (${THREADS_PROFILE_URL}) at ${nowStr}</span>`);
+                }
+            }, 350);
+        }
+
+        /********************************************************************
+         * 5. UPLOAD / ATTACH PHOTOS & VIDEOS TO THREADS SHOWCASE
+         ********************************************************************/
+        function toggleQuickThreadComposer() {
+            const el = document.getElementById('quick-thread-composer');
+            el.classList.toggle('hidden');
+            if (!el.classList.contains('hidden')) {
+                document.getElementById('quick-thread-text').focus();
+            }
+        }
+
+        function readFilesAsMediaItems(fileList, callback) {
+            const files = Array.from(fileList || []);
+            if (files.length === 0) {
+                callback([]);
+                return;
+            }
+            const results = [];
+            let remaining = files.length;
+
+            files.forEach(file => {
+                const isVideo = file.type.startsWith('video/');
+                const objectUrl = URL.createObjectURL(file);
+                results.push({
+                    type: isVideo ? 'VIDEO' : 'IMAGE',
+                    url: objectUrl,
+                    caption: file.name
+                });
+                remaining--;
+                if (remaining === 0) callback(results);
+            });
+        }
+
+        function handleQuickMediaFileSelect(event) {
+            readFilesAsMediaItems(event.target.files, (items) => {
+                pendingQuickMediaItems = items;
+                const label = document.getElementById('quick-upload-label');
+                const strip = document.getElementById('quick-media-preview-strip');
+                if (label) label.textContent = `${items.length} file(s) ready`;
+                if (strip) {
+                    strip.classList.remove('hidden');
+                    strip.innerHTML = items.map(m => `
+                        <div class="px-2 py-0.5 rounded bg-slate-900 border border-cyan-400/40 text-[10px] font-mono text-cyan-300 flex items-center gap-1 shrink-0">
+                            <i class="fa-solid ${m.type === 'VIDEO' ? 'fa-film text-amber-300' : 'fa-image text-emerald-300'}"></i>
+                            <span>${escapeHtml(m.caption)}</span>
+                        </div>
+                    `).join('');
+                }
+            });
+        }
+
+        function handleModalMediaUpload(event) {
+            readFilesAsMediaItems(event.target.files, (items) => {
+                pendingModalMediaItems = items;
+                const statusEl = document.getElementById('threads-config-status');
+                if (statusEl) {
+                    statusEl.textContent = `Selected ${items.length} photo/video file(s) ready to reflect!`;
+                    statusEl.classList.remove('hidden');
+                }
+            });
+        }
+
+        function detectMediaTypeFromUrl(url) {
+            if (!url) return null;
+            const clean = url.trim();
+            if (/\.(mp4|webm|ogg|mov)(\?|$)/i.test(clean)) {
+                return { type: 'VIDEO', url: clean };
+            }
+            return { type: 'IMAGE', url: clean };
+        }
+
+        function publishQuickThread() {
+            const textInput = document.getElementById('quick-thread-text');
+            const mediaUrlInput = document.getElementById('quick-thread-media-url');
+            const val = (textInput.value || '').trim();
+            const directMediaUrl = (mediaUrlInput.value || '').trim();
+
+            if (!val && !directMediaUrl && pendingQuickMediaItems.length === 0) return;
+
+            const isUrl = val.startsWith('http://') || val.startsWith('https://');
+            const mediaItems = [...pendingQuickMediaItems];
+            if (directMediaUrl) {
+                const detected = detectMediaTypeFromUrl(directMediaUrl);
+                if (detected) mediaItems.push(detected);
+            }
+
+            const posts = getStoredThreadsPosts();
+            const newPost = {
+                id: 'th_media_' + Date.now(),
+                author: "Abhishek Mohanty",
+                handle: "@abhicism",
+                timestamp: "Just now",
+                media_type: mediaItems.length > 1 ? 'CAROUSEL_ALBUM' : (mediaItems[0]?.type || 'TEXT'),
+                text: isUrl ? `Mirrored Threads update from ${val}` : (val || "Uploaded new media update to @abhicism"),
+                permalink: isUrl ? val : THREADS_PROFILE_URL,
+                likes: 1,
+                replies: 0,
+                media: mediaItems,
+                showOfficialEmbed: isUrl && val.includes('threads.com/')
+            };
+
+            posts.unshift(newPost);
+            saveThreadsPosts(posts);
+
+            // Reset inputs
+            textInput.value = '';
+            mediaUrlInput.value = '';
+            pendingQuickMediaItems = [];
+            const strip = document.getElementById('quick-media-preview-strip');
+            if (strip) { strip.innerHTML = ''; strip.classList.add('hidden'); }
+            const label = document.getElementById('quick-upload-label');
+            if (label) label.textContent = 'Upload File(s)';
+
+            toggleQuickThreadComposer();
+            setThreadsMediaFilter('all');
+            appendTerminalLine(`<span class="text-cyan-300">&gt; Reflected new @abhicism ${newPost.media_type} post in Threads showcase box.</span>`);
+        }
+
+        function addManualThreadFromModal() {
+            const urlInput = document.getElementById('threads-embed-url-input');
+            const mediaUrlInput = document.getElementById('threads-modal-media-url');
+            const txtInput = document.getElementById('threads-embed-text-input');
+
+            const postUrl = (urlInput.value || '').trim() || THREADS_PROFILE_URL;
+            const directMediaUrl = (mediaUrlInput.value || '').trim();
+            const text = (txtInput.value || '').trim() || `Shared a post on Threads (${postUrl})`;
+
+            const mediaItems = [...pendingModalMediaItems];
+            if (directMediaUrl) {
+                const detected = detectMediaTypeFromUrl(directMediaUrl);
+                if (detected) mediaItems.push(detected);
+            }
+
+            const posts = getStoredThreadsPosts();
+            posts.unshift({
+                id: 'th_modal_' + Date.now(),
+                author: "Abhishek Mohanty",
+                handle: "@abhicism",
+                timestamp: "Just now",
+                media_type: mediaItems.length > 1 ? 'CAROUSEL_ALBUM' : (mediaItems[0]?.type || 'TEXT'),
+                text: text,
+                permalink: postUrl,
+                likes: 1,
+                replies: 0,
+                media: mediaItems,
+                showOfficialEmbed: postUrl.includes('/post/')
+            });
+            saveThreadsPosts(posts);
+
+            urlInput.value = '';
+            mediaUrlInput.value = '';
+            txtInput.value = '';
+            pendingModalMediaItems = [];
+            renderThreadsFeed();
+
+            const statusEl = document.getElementById('threads-config-status');
+            if (statusEl) {
+                statusEl.textContent = "Post with media reflected in HUD & saved!";
+                statusEl.classList.remove('hidden');
+                setTimeout(() => statusEl.classList.add('hidden'), 3000);
+            }
+        }
+
+        function openThreadsModal() {
+            const config = getThreadsConfig();
+            document.getElementById('threads-rss-url-input').value = config.rssUrl || '';
+            document.getElementById('threads-api-token-input').value = config.apiToken || '';
+            renderThreadsFeed();
+
+            const modal = document.getElementById('threads-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeThreadsModal() {
+            const modal = document.getElementById('threads-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function saveThreadsSyncConfig() {
+            const rssUrl = document.getElementById('threads-rss-url-input').value.trim();
+            const apiToken = document.getElementById('threads-api-token-input').value.trim();
+            try {
+                localStorage.setItem(THREADS_CONFIG_KEY, JSON.stringify({ rssUrl, apiToken }));
+            } catch (e) {}
+
+            const statusEl = document.getElementById('threads-config-status');
+            statusEl.textContent = "Live Sync configuration saved! Polling @abhicism now...";
+            statusEl.classList.remove('hidden');
+            syncThreadsFeed(true);
+            setTimeout(() => statusEl.classList.add('hidden'), 3500);
+        }
+
+        /********************************************************************
+         * 6. LIVE 60FPS CANVAS VIDEO STREAMER FOR THREADS VIDEO POSTS
+         * Renders an animated 3D Vector ANN & Telemetry video inside any
+         * <canvas data-rag-video-canvas="true"> element
+         ********************************************************************/
+        function updateRagVideoCanvases(elapsed) {
+            const canvases = document.querySelectorAll('canvas[data-rag-video-canvas="true"]');
+            canvases.forEach(canvas => {
+                const ctx = canvas.getContext('2d');
+                const w = canvas.width;
+                const h = canvas.height;
+
+                // Deep cyber background
+                ctx.fillStyle = '#040b18';
+                ctx.fillRect(0, 0, w, h);
+
+                // Moving perspective grid
+                ctx.strokeStyle = 'rgba(34, 211, 238, 0.14)';
+                ctx.lineWidth = 1;
+                const offset = (elapsed * 30) % 32;
+                for (let x = offset; x < w; x += 32) {
+                    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
+                }
+                for (let y = offset; y < h; y += 32) {
+                    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+                }
+
+                // Animated 3D Vector Nodes & Cosine Similarity Beams
+                const cx = w * 0.5 + Math.cos(elapsed * 1.4) * (w * 0.12);
+                const cy = h * 0.5 + Math.sin(elapsed * 1.1) * (h * 0.12);
+
+                for (let i = 0; i < 18; i++) {
+                    const angle = (i / 18) * Math.PI * 2 + elapsed * 0.35;
+                    const rad = (h * 0.28) + Math.sin(elapsed * 1.5 + i) * 22;
+                    const nx = w * 0.5 + Math.cos(angle) * rad * 1.35;
+                    const ny = h * 0.5 + Math.sin(angle) * rad * 0.75;
+
+                    // ANN Beam to active query centroid
+                    if (i % 3 === 0) {
+                        ctx.strokeStyle = i % 6 === 0 ? 'rgba(163, 230, 53, 0.75)' : 'rgba(34, 211, 238, 0.75)';
+                        ctx.lineWidth = 1.6;
+                        ctx.beginPath();
+                        ctx.moveTo(cx, cy);
+                        ctx.lineTo(nx, ny);
+                        ctx.stroke();
+                    }
+
+                    ctx.fillStyle = i % 2 === 0 ? '#22d3ee' : '#a3e635';
+                    ctx.beginPath();
+                    ctx.arc(nx, ny, 4.5, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+
+                // Central Query Vector Core
+                ctx.fillStyle = '#ffffff';
+                ctx.beginPath();
+                ctx.arc(cx, cy, 7, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.strokeStyle = '#22d3ee';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(cx, cy, 13 + Math.sin(elapsed * 5) * 3, 0, Math.PI * 2);
+                ctx.stroke();
+
+                // Telemetry HUD Overlay inside Video
+                ctx.fillStyle = 'rgba(4, 9, 20, 0.78)';
+                ctx.fillRect(12, h - 38, w - 24, 28);
+                ctx.fillStyle = '#a3e635';
+                ctx.font = 'bold 11px "JetBrains Mono", monospace';
+                ctx.fillText(`@abhicism // ANN COSINE: ${(0.952 + Math.sin(elapsed * 2) * 0.012).toFixed(3)} | QDRANT HNSW: 41.8ms`, 20, h - 20);
+            });
+        }
+
+        /********************************************************************
+         * 7. PORTRAIT IMAGE FALLBACK & 3D PARALLAX CONTROLLER
+         ********************************************************************/
+        let fallbackStage = 0;
+
+        function handlePortraitFallback(imgEl) {
+            if (fallbackStage === 0) {
+                fallbackStage = 1;
+                imgEl.src = "652631895_2107286223403367_7068580594276608999_n.jpg";
+            } else {
+                imgEl.style.display = "none";
+                const canvas = document.getElementById("bg-fallback-canvas");
+                canvas.style.display = "block";
+                drawHighDetailPortraitFallback(canvas);
+            }
+        }
+
+        function handleCustomPortraitUpload(event) {
+            const file = event.target.files && event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                const imgEl = document.getElementById("bg-portrait-img");
+                const canvas = document.getElementById("bg-fallback-canvas");
+                canvas.style.display = "none";
+                imgEl.style.display = "block";
+                imgEl.src = e.target.result;
+                appendTerminalLine(`<span class="text-emerald-400">&gt; Loaded custom 3D background portrait: ${file.name}</span>`);
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function adjustPhotoExposure(val) {
+            const imgEl = document.getElementById("bg-portrait-img");
+            const b = (val / 100).toFixed(2);
+            imgEl.style.filter = `contrast(1.08) saturate(1.06) brightness(${b})`;
+        }
+
+        function drawHighDetailPortraitFallback(canvas) {
+            const ctx = canvas.getContext("2d");
+            const w = canvas.width;
+            const h = canvas.height;
+            const bgGrad = ctx.createRadialGradient(w * 0.58, h * 0.34, 80, w * 0.52, h * 0.5, w * 0.85);
+            bgGrad.addColorStop(0, "#163256");
+            bgGrad.addColorStop(0.5, "#0a192f");
+            bgGrad.addColorStop(1, "#040914");
+            ctx.fillStyle = bgGrad;
+            ctx.fillRect(0, 0, w, h);
+
+            ctx.fillStyle = "rgba(14, 34, 62, 0.72)";
+            ctx.strokeStyle = "rgba(56, 189, 248, 0.45)";
+            ctx.lineWidth = 3;
+            ctx.fillRect(w * 0.06, h * 0.16, w * 0.28, h * 0.48);
+            ctx.strokeRect(w * 0.06, h * 0.16, w * 0.28, h * 0.48);
+            ctx.fillRect(w * 0.68, h * 0.22, w * 0.26, h * 0.52);
+            ctx.strokeRect(w * 0.68, h * 0.22, w * 0.26, h * 0.52);
+        }
+
+        /********************************************************************
+         * 8. THREE.JS HOLOGRAPHIC 3D PARTICLE WAVE & WIREFRAME POLYHEDRON
+         ********************************************************************/
+        let scene, camera, renderer, clock;
+        let waveParticles, waveGeo;
+        let polyGroup, shoulderParticles;
+        let mouseTarget = { x: 0, y: 0 };
+        let mouseSmooth = { x: 0, y: 0 };
+        let ragPulseStrength = 0;
+
+        function initThreeOverlay() {
+            const container = document.getElementById("webgl-overlay");
+            scene = new THREE.Scene();
+
+            camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 200);
+            camera.position.set(0, 1.2, 15);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance" });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.setClearColor(0x000000, 0);
+            container.appendChild(renderer.domElement);
+
+            clock = new THREE.Clock();
+
+            // 1. Undulating 3D Cyan + Olive-Green Particle Wave Terrain
+            const cols = 95;
+            const rows = 36;
+            const numPts = cols * rows;
+            waveGeo = new THREE.BufferGeometry();
+            const positions = new Float32Array(numPts * 3);
+            const colors = new Float32Array(numPts * 3);
+
+            let ptr = 0;
+            for (let ix = 0; ix < cols; ix++) {
+                for (let iz = 0; iz < rows; iz++) {
+                    const x = (ix - cols / 2) * 0.34;
+                    const z = (iz - rows / 2) * 0.28 + 1.5;
+                    positions[ptr * 3] = x;
+                    positions[ptr * 3 + 1] = -3.8;
+                    positions[ptr * 3 + 2] = z;
+
+                    const mix = ix / cols;
+                    colors[ptr * 3] = 0.15 + mix * 0.35;
+                    colors[ptr * 3 + 1] = 0.72 + (1 - mix) * 0.15;
+                    colors[ptr * 3 + 2] = 0.92 - mix * 0.55;
+                    ptr++;
+                }
+            }
+
+            waveGeo.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+            waveGeo.setAttribute("color", new THREE.BufferAttribute(colors, 3));
+
+            const waveMat = new THREE.PointsMaterial({
+                size: 0.068,
+                vertexColors: true,
+                transparent: true,
+                opacity: 0.84,
+                blending: THREE.AdditiveBlending
+            });
+
+            waveParticles = new THREE.Points(waveGeo, waveMat);
+            scene.add(waveParticles);
+
+            // 2. Floating 3D Wireframe Icosahedron Network
+            polyGroup = new THREE.Group();
+            polyGroup.position.set(-2.3, 3.1, 0.5);
+
+            const icoGeo = new THREE.IcosahedronGeometry(1.15, 1);
+            const wireMat = new THREE.MeshBasicMaterial({
+                color: 0x38bdf8,
+                wireframe: true,
+                transparent: true,
+                opacity: 0.55
+            });
+            const icoMesh = new THREE.Mesh(icoGeo, wireMat);
+            polyGroup.add(icoMesh);
+
+            const vertices = icoGeo.attributes.position;
+            const nodeGeo = new THREE.SphereGeometry(0.045, 8, 8);
+            const nodeMat = new THREE.MeshBasicMaterial({ color: 0xa5f3fc });
+            for (let i = 0; i < vertices.count; i += 3) {
+                const dot = new THREE.Mesh(nodeGeo, nodeMat);
+                dot.position.set(vertices.getX(i), vertices.getY(i), vertices.getZ(i));
+                polyGroup.add(dot);
+            }
+            scene.add(polyGroup);
+
+            // 3. Ambient Holographic Shoulder Particles
+            const spCount = 110;
+            const spGeo = new THREE.BufferGeometry();
+            const spPos = new Float32Array(spCount * 3);
+            for (let i = 0; i < spCount; i++) {
+                spPos[i * 3] = 1.2 + (Math.random() - 0.5) * 6.5;
+                spPos[i * 3 + 1] = -1.5 + Math.random() * 5.5;
+                spPos[i * 3 + 2] = (Math.random() - 0.5) * 3.0;
+            }
+            spGeo.setAttribute("position", new THREE.BufferAttribute(spPos, 3));
+            const spMat = new THREE.PointsMaterial({
+                color: 0x67e8f9,
+                size: 0.055,
+                transparent: true,
+                opacity: 0.7,
+                blending: THREE.AdditiveBlending
+            });
+            shoulderParticles = new THREE.Points(spGeo, spMat);
+            scene.add(shoulderParticles);
+
+            window.addEventListener("resize", onWindowResize);
+            window.addEventListener("mousemove", onMouseMove);
+            window.addEventListener("touchmove", onTouchMove, { passive: true });
+        }
+
+        function onMouseMove(e) {
+            mouseTarget.x = (e.clientX / window.innerWidth) * 2 - 1;
+            mouseTarget.y = -(e.clientY / window.innerHeight) * 2 + 1;
+        }
+
+        function onTouchMove(e) {
+            if (e.touches.length > 0) {
+                mouseTarget.x = (e.touches[0].clientX / window.innerWidth) * 2 - 1;
+                mouseTarget.y = -(e.touches[0].clientY / window.innerHeight) * 2 + 1;
+            }
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        function animateScene() {
+            requestAnimationFrame(animateScene);
+            const elapsed = clock.getElapsedTime();
+
+            mouseSmooth.x += (mouseTarget.x - mouseSmooth.x) * 0.06;
+            mouseSmooth.y += (mouseTarget.y - mouseSmooth.y) * 0.06;
+
+            // 1. Apply 3D Tilt, Parallax & Breathing Motion to Full-Screen Portrait Photo Layer
+            const photoLayer = document.getElementById("photo-3d-layer");
+            if (photoLayer) {
+                const breathScale = 1.03 + Math.sin(elapsed * 0.9) * 0.008;
+                const shiftX = -mouseSmooth.x * 18;
+                const shiftY = mouseSmooth.y * 12 + Math.cos(elapsed * 0.7) * 3;
+                const rotY = mouseSmooth.x * 3.2;
+                const rotX = mouseSmooth.y * 2.2;
+                photoLayer.style.transform = `translate3d(${shiftX}px, ${shiftY}px, 0px) rotateX(${rotX}deg) rotateY(${rotY}deg) scale(${breathScale})`;
+            }
+
+            // 2. Animate 3D Particle Wave Terrain
+            const posAttr = waveGeo.attributes.position;
+            const cols = 95;
+            const rows = 36;
+            let idx = 0;
+            const boost = 1 + ragPulseStrength * 1.4;
+
+            for (let ix = 0; ix < cols; ix++) {
+                for (let iz = 0; iz < rows; iz++) {
+                    const waveY =
+                        Math.sin((ix * 0.16) + elapsed * 1.9) * 0.42 * boost +
+                        Math.cos((iz * 0.24) + elapsed * 1.4) * 0.28 * boost;
+                    posAttr.setY(idx, -3.5 + waveY);
+                    idx++;
+                }
+            }
+            posAttr.needsUpdate = true;
+
+            // 3. Rotate Floating 3D Polyhedron
+            if (polyGroup) {
+                polyGroup.rotation.x = elapsed * 0.25 + mouseSmooth.y * 0.3;
+                polyGroup.rotation.y = elapsed * 0.38 + mouseSmooth.x * 0.3;
+                polyGroup.position.y = 3.1 + Math.sin(elapsed * 1.2) * 0.14;
+            }
+
+            // 4. Float Holographic Shoulder Particles
+            if (shoulderParticles) {
+                shoulderParticles.rotation.y = mouseSmooth.x * 0.12 + Math.sin(elapsed * 0.2) * 0.05;
+                shoulderParticles.position.y = Math.sin(elapsed * 0.8) * 0.12;
+            }
+
+            if (ragPulseStrength > 0.01) {
+                ragPulseStrength *= 0.94;
+            }
+
+            // 5. Update any visible 60FPS Threads Video Canvases
+            updateRagVideoCanvases(elapsed);
+
+            camera.position.x = mouseSmooth.x * 0.45;
+            camera.position.y = 1.2 + mouseSmooth.y * 0.28;
+            camera.lookAt(0, 0.5, 0);
+
+            renderer.render(scene, camera);
+        }
+
+        /********************************************************************
+         * 9. HUD INTERACTIONS: TERMINAL, RAG GRAPH, & BENTO INSPECTOR
+         ********************************************************************/
+        const BENTO_DETAILS = [
+            "FULL-STACK CENTER: End-to-end production apps built with Python, C++, TypeScript, React, FastAPI, PostgreSQL & MySQL.",
+            "FASTAPI & REACT UI: Low-latency Server-Sent Events (SSE) & WebSockets streaming real-time LLM tokens at 60 FPS.",
+            "HYBRID RAG PIPELINES: Dense 1,536-d embeddings fused with BM25 lexical search via Reciprocal Rank Fusion (RRF).",
+            "SCALABLE ARCHITECTURE: Horizontally scaled microservices with Redis Streams, Docker, and sub-45ms p95 API latency.",
+            "VECTOR HNSW INDEXING: Qdrant & pgvector clusters tuned with int8 Scalar Quantization for 4x memory efficiency.",
+            "ENGINEERING BENTO: Click 'ENTER MAIN PORTFOLIO' below to launch https://webpage-two-lake.vercel.app/"
+        ];
+
+        function appendTerminalLine(htmlContent) {
+            const body = document.getElementById("terminal-body");
+            if (!body) return;
+            const line = document.createElement("div");
+            line.innerHTML = htmlContent;
+            body.appendChild(line);
+            body.scrollTop = body.scrollHeight;
+        }
+
+        function focusTerminalInput() {
+            const input = document.getElementById("terminal-cmd-input");
+            if (input) input.focus();
+        }
+
+        function toggleSideNav() {
+            const dock = document.getElementById("side-nav-dock");
+            const toggle = document.getElementById("side-nav-toggle");
+            const icon = document.getElementById("side-nav-toggle-icon");
+            const isOpen = dock.classList.toggle("is-open");
+
+            toggle.setAttribute("aria-expanded", String(isOpen));
+            toggle.title = isOpen ? "Close side navigation" : "Open side navigation";
+            icon.className = `fa-solid ${isOpen ? "fa-chevron-left" : "fa-chevron-right"} text-[10px]`;
+            if (!isOpen) toggle.blur();
+        }
+
+        function handleTerminalSubmit(e) {
+            e.preventDefault();
+            const input = document.getElementById("terminal-cmd-input");
+            const raw = input.value.trim();
+            if (!raw) return;
+            input.value = "";
+            runTerminalCmd(raw.toLowerCase());
+        }
+
+        function runTerminalCmd(cmd) {
+            appendTerminalLine(`<div><span class="text-emerald-400">abhishek@hud:~$</span> <span class="text-white">${escapeHtml(cmd)}</span></div>`);
+
+            if (cmd === "open" || cmd === "portfolio" || cmd === "enter") {
+                appendTerminalLine(`<span class="text-cyan-300">&gt; Jumping to main portfolio: <a href="${PORTFOLIO_URL}" target="_blank" class="underline">${PORTFOLIO_URL}</a>...</span>`);
+                window.open(PORTFOLIO_URL, "_blank", "noopener,noreferrer");
+            } else if (cmd === "threads" || cmd === "threads media" || cmd === "abhicism") {
+                syncThreadsFeed(false);
+                const posts = getStoredThreadsPosts();
+                appendTerminalLine(`<span class="text-emerald-300">&gt; Threads Rich Media Feed (<a href="${THREADS_PROFILE_URL}" target="_blank" class="underline">@abhicism</a>) — ${posts.length} posts active (Photos, Carousels, Videos):</span>`);
+                posts.slice(0, 2).forEach(p => {
+                    appendTerminalLine(`<span class="text-slate-300">&bull; [${escapeHtml(p.media_type)}] "${escapeHtml(p.text.slice(0, 68))}..."</span>`);
+                });
+            } else if (cmd === "rag") {
+                pulseRagFlow();
+                appendTerminalLine(`<span class="text-emerald-300">&gt; [RAG SIMULATOR] Hybrid BM25 + Dense 1536d RRF -&gt; Cross-Encoder Rerank -&gt; 96.4% Faithfulness (41.8ms)</span>`);
+            } else if (cmd === "stack" || cmd === "skills") {
+                appendTerminalLine(`<span class="text-amber-300">&gt; Stack: Python, C++, JS/TS, React, FastAPI, PostgreSQL, MySQL, Qdrant, pgvector, Three.js</span>`);
+            } else if (cmd === "preview") {
+                openPortalPreviewModal();
+                appendTerminalLine(`<span class="text-cyan-300">&gt; Opened live portfolio preview modal.</span>`);
+            } else if (cmd === "clear") {
+                document.getElementById("terminal-body").innerHTML = "";
+            } else if (cmd === "help") {
+                appendTerminalLine(`<span class="text-slate-300">&gt; Commands: <strong class="text-cyan-300">open</strong> (launch portfolio), <strong class="text-cyan-300">threads</strong> (inspect @abhicism media feed), <strong class="text-cyan-300">rag</strong> (pulse 3D wave), <strong class="text-cyan-300">stack</strong>, <strong class="text-cyan-300">preview</strong>, <strong class="text-cyan-300">clear</strong></span>`);
+            } else {
+                appendTerminalLine(`<span class="text-slate-400">&gt; Executed '${escapeHtml(cmd)}'. Type <strong class="text-cyan-300">help</strong> or click <strong class="text-emerald-300">ENTER MAIN PORTFOLIO</strong>.</span>`);
+            }
+        }
+
+        function pulseRagFlow() {
+            ragPulseStrength = 1.0;
+            const readout = document.getElementById("rag-node-readout");
+            if (readout) {
+                readout.innerHTML = `<span class="text-emerald-400">ACTIVE PULSE:</span> Query embedded (1536d) &rarr; Qdrant HNSW ANN (41.8ms) &rarr; Grounded SSE stream ready.`;
+            }
+        }
+
+        function inspectRagNode(desc) {
+            ragPulseStrength = 0.85;
+            const readout = document.getElementById("rag-node-readout");
+            if (readout) {
+                readout.innerHTML = `<span class="text-cyan-300">NODE TELEMETRY:</span> ${escapeHtml(desc)}`;
+            }
+            appendTerminalLine(`<span class="text-cyan-300">&gt; ${escapeHtml(desc)}</span>`);
+        }
+
+        function inspectStackModule(text) {
+            ragPulseStrength = 0.6;
+            appendTerminalLine(`<span class="text-[#c5e1a5]">&gt; [MODULE] ${escapeHtml(text)}</span>`);
+        }
+
+        function inspectBentoCard(index) {
+            ragPulseStrength = 0.75;
+            const detail = BENTO_DETAILS[index] || BENTO_DETAILS[0];
+            appendTerminalLine(`<span class="text-cyan-300">&gt; [BENTO_0${index + 1}] ${escapeHtml(detail)}</span>`);
+        }
+
+        function openPortalPreviewModal() {
+            const modal = document.getElementById("portal-preview-modal");
+            modal.classList.remove("hidden");
+            modal.classList.add("flex");
+        }
+
+        function closePortalPreviewModal() {
+            const modal = document.getElementById("portal-preview-modal");
+            modal.classList.add("hidden");
+            modal.classList.remove("flex");
+        }
+
+        function copyPortfolioUrl() {
+            const temp = document.createElement("input");
+            temp.value = PORTFOLIO_URL;
+            document.body.appendChild(temp);
+            temp.select();
+            document.execCommand("copy");
+            document.body.removeChild(temp);
+
+            const status = document.getElementById("copy-url-status");
+            if (status) {
+                status.textContent = "Copied https://webpage-two-lake.vercel.app/ !";
+                status.classList.add("text-emerald-300");
+                setTimeout(() => {
+                    status.textContent = "Copy Portfolio URL";
+                    status.classList.remove("text-emerald-300");
+                }, 2200);
+            }
+        }
+
+        // Start 3D Engine & Threads Rich Media Poller on Window Load
+        window.onload = function () {
+            initThreeOverlay();
+            animateScene();
+            renderThreadsFeed();
+            syncThreadsFeed(false);
+            // Auto-poll @abhicism every 60 seconds
+            setInterval(() => syncThreadsFeed(false), 60000);
+        };
+    </script>
+</body>
+</html>
