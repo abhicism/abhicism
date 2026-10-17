@@ -140,6 +140,30 @@
             justify-content: space-between;
         }
 
+        .side-nav-dock {
+            transform: translateX(calc(-100% + 12px));
+            transition: transform 0.25s ease;
+            will-change: transform;
+        }
+
+        .side-nav-dock:focus-within,
+        .side-nav-dock.is-open {
+            transform: translateX(0);
+        }
+
+        @media (hover: hover) {
+            .side-nav-dock:hover {
+                transform: translateX(0);
+            }
+        }
+
+        .side-nav-toggle {
+            position: absolute;
+            top: 50%;
+            right: -12px;
+            transform: translateY(-50%);
+        }
+
         /* Olive Green HUD Panels & Docks (Remembering user's Olive Green preference) */
         .olive-dock {
             background: linear-gradient(180deg, rgba(85, 107, 47, 0.84) 0%, rgba(45, 58, 24, 0.90) 100%);
@@ -291,7 +315,19 @@
     <div id="hud-shell" class="flex min-h-screen">
 
         <!-- LEFT OLIVE-GREEN VERTICAL SIDEBAR DOCK -->
-        <aside class="fixed left-0 top-0 bottom-0 w-12 sm:w-14 olive-dock z-30 flex flex-col items-center justify-between py-4">
+        <aside id="side-nav-dock" class="side-nav-dock fixed left-0 top-0 bottom-0 w-12 sm:w-14 olive-dock z-30 flex flex-col items-center justify-between py-4">
+            <button
+                id="side-nav-toggle"
+                type="button"
+                onclick="toggleSideNav()"
+                aria-label="Toggle side navigation"
+                aria-expanded="false"
+                title="Open side navigation"
+                class="side-nav-toggle w-6 h-12 rounded-r-lg bg-[#35441b] border border-l-0 border-[#9ccc65]/60 text-[#dcedc8] hover:text-cyan-300 flex items-center justify-center shadow-lg"
+            >
+                <i id="side-nav-toggle-icon" class="fa-solid fa-chevron-right text-[10px]"></i>
+            </button>
+
             <!-- Top Lambda / 'A' Emblem -->
             <a href="https://webpage-two-lake.vercel.app/" target="_blank" rel="noopener noreferrer" title="Jump to Main Portfolio" class="w-9 h-9 rounded-lg bg-slate-950/60 border border-cyan-400/50 flex items-center justify-center text-cyan-300 font-display font-bold text-lg shadow-lg shadow-cyan-500/20 hover:scale-110 transition">
                 &Lambda;
@@ -2370,6 +2406,18 @@
         function focusTerminalInput() {
             const input = document.getElementById("terminal-cmd-input");
             if (input) input.focus();
+        }
+
+        function toggleSideNav() {
+            const dock = document.getElementById("side-nav-dock");
+            const toggle = document.getElementById("side-nav-toggle");
+            const icon = document.getElementById("side-nav-toggle-icon");
+            const isOpen = dock.classList.toggle("is-open");
+
+            toggle.setAttribute("aria-expanded", String(isOpen));
+            toggle.title = isOpen ? "Close side navigation" : "Open side navigation";
+            icon.className = `fa-solid ${isOpen ? "fa-chevron-left" : "fa-chevron-right"} text-[10px]`;
+            if (!isOpen) toggle.blur();
         }
 
         function handleTerminalSubmit(e) {
